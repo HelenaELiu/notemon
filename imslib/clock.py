@@ -1,4 +1,4 @@
-#####################################################################
+####################################################################
 #
 # This software is to be used for MIT's class Interactive Music Systems only.
 # Since this file may contain answers to homework problems, you MAY NOT release it publicly.
@@ -305,6 +305,7 @@ class AudioScheduler(object):
         super(AudioScheduler, self).__init__()
         self.tempo_map = tempo_map
         self.commands = []
+        self.command_map = {}
 
         self.generator = None
         self.cur_frame = 0
@@ -318,6 +319,13 @@ class AudioScheduler(object):
         :param gen: The generator object.
         """
         self.generator = gen
+
+    @staticmethod
+    def cmd_to_name(func, tick, args):
+        cmdName = f'{func.__name__}_{tick}'
+        for a in args:
+            cmdName += f'_{a}'
+        return cmdName
 
     def generate(self, num_frames, num_channels):
         """
@@ -345,6 +353,7 @@ class AudioScheduler(object):
             if cmd_frame < end_frame:
                 o_idx = self._generate_until(cmd_frame, num_channels, output, o_idx)
                 command = self.commands.pop(0)
+                del self.command_map[self.cmd_to_name(command.func, command.tick, command.args)]
                 command.execute()
             else:
                 break
@@ -383,7 +392,7 @@ class AudioScheduler(object):
         return self.tempo_map.time_to_tick(self.get_time())
 
     # add a record for the function to call at the particular tick
-    def post_at_tick(self, func, tick, arg = None):
+    def post_at_tick(self, func, tick, args = None):
         """
         Adds a record for the function to execute at the specified tick value.
 
@@ -397,22 +406,27 @@ class AudioScheduler(object):
         post_time = self.tempo_map.tick_to_time(tick)
 
         # create a command to hold the function/arg and sort by tick
-        cmd = Command(tick, func, arg)
+        cmd = Command(tick, func, args)
+        cmdName = self.cmd_to_name(func, tick, args)
+        self.command_map[cmdName] = cmd
+
         self.commands.append(cmd)
         self.commands.sort(key = lambda x: x.tick)
-        return cmd
+
+        return cmdName
 
     # attempt a removal. Does nothing if cmd is not found
-    def cancel(self, cmd):
+    def cancel(self, cmdName):
         """
         Attempts to remove the command object from the list of commands to be
         executed. Does nothing if ``cmd`` is not found.
 
         :param cmd: The command object to remove.
         """
-        if cmd in self.commands:
-            idx = self.commands.index(cmd)
-            del self.commands[idx]
+        del self.command_map[cmdName]
+
+        self.commands = list(self.command_map.values())
+        self.commands.sort(key = lambda x: x.tick)
 
     def now_str(self):
         """
@@ -430,7 +444,7 @@ class Command(object):
     """
     An object that will execute a function exactly once with the given arguments.
     """
-    def __init__(self, tick, func, arg):
+    def __init__(self, tick, func, args):
         """
         :param tick: The tick value at which this command will be executed.
         :param func: The function that should be called.
@@ -439,7 +453,7 @@ class Command(object):
         super(Command, self).__init__()
         self.tick = int(tick)
         self.func = func
-        self.arg = arg
+        self.args = args
         self.did_it = False
 
     def execute(self):
@@ -449,10 +463,10 @@ class Command(object):
         # ensure that execute only gets called once.
         if not self.did_it:
             self.did_it = True
-            if self.arg == None:
+            if self.args == None:
                 self.func( self.tick )
             else:
-                self.func( self.tick, self.arg )
+                self.func( self.tick, *self.args )
 
 
     def __repr__(self):
