@@ -1,0 +1,6 @@
+
+click.py
+========
+
+.. automodule:: imslib.click
+    :members:
