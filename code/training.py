@@ -14,7 +14,7 @@ from imslib.mixer import Mixer
 from imslib.note import NoteGenerator, Envelope
 from imslib.wavegen import WaveGenerator
 from imslib.wavesrc import WaveBuffer, WaveFile
-from imslib.gfxutil import topleft_label, resize_topleft_label, CLabelRect, KFAnim, AnimGroup
+from imslib.gfxutil import topleft_label, resize_topleft_label, CLabelRect, KFAnim, AnimGroup, CEllipse
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
@@ -39,6 +39,13 @@ notes = {1: NoteGenerator(C_major_scale[1], 0.5, 'sine'), 1: NoteGenerator(C_maj
 1: NoteGenerator(C_major_scale[1], 0.5, 'sine'), 1: NoteGenerator(C_major_scale[1], 0.5, 'sine'),}
 # self.mixer.add(Envelope(notes[lane], 0.01, 1, 1, 1))
 
+x1 = Window.width * (nowbar_w_margin + 0.01)
+x2 = Window.width * (1- nowbar_w_margin - 0.01)
+dist = (x2 - x1)/7
+lane_to_pos = {1:x1, 2:x1 + dist, \
+        3:x1 + 2*dist, 4:x1 + 3*dist, 5:x1 + 4*dist, 6:x1 + 5*dist, \
+        7:x1 + 6*dist, 8:x1 + 7*dist}
+
 
 class MainWidget(BaseWidget):
     def __init__(self):
@@ -58,47 +65,6 @@ class MainWidget(BaseWidget):
         self.canvas.add(self.display)
         
         self.info = topleft_label()
-
-        x1 = Window.width * (nowbar_w_margin + 0.01)
-        x2 = Window.width * (1- nowbar_w_margin - 0.01)
-        dist = (x2 - x1)/7
-        lane_to_pos = {1:x1, 2:x1 + dist, \
-        3:x1 + 2*dist, 4:x1 + 3*dist, 5:x1 + 4*dist, 6:x1 + 5*dist, \
-        7:x1 + 6*dist, 8:x1 + 7*dist}
-        y = time_to_ypos(0)
-
-        self.label1 = Label(text='A', font_size=50, color=(1, 1, 1, 1))  # White letter
-        self.label1.center = (lane_to_pos[1], y)  # Position the label in the center of the triangle
-
-        self.label2 = Label(text='S', font_size=50, color=(1, 1, 1, 1))  # White letter
-        self.label2.center = (lane_to_pos[2], y)  # Position the label in the center of the triangle
-
-        self.label3 = Label(text='D', font_size=50, color=(1, 1, 1, 1))  # White letter
-        self.label3.center = (lane_to_pos[3], y)  # Position the label in the center of the triangle
-
-        self.label4 = Label(text='F', font_size=50, color=(1, 1, 1, 1))  # White letter
-        self.label4.center = (lane_to_pos[4], y)  # Position the label in the center of the triangle
-
-        self.label5 = Label(text='J', font_size=50, color=(1, 1, 1, 1))  # White letter
-        self.label5.center = (lane_to_pos[5], y)  # Position the label in the center of the triangle
-
-        self.label6 = Label(text='K', font_size=50, color=(1, 1, 1, 1))  # White letter
-        self.label6.center = (lane_to_pos[6], y)  # Position the label in the center of the triangle
-
-        self.label7 = Label(text='L', font_size=50, color=(1, 1, 1, 1))  # White letter
-        self.label7.center = (lane_to_pos[7], y)  # Position the label in the center of the triangle
-
-        self.label8 = Label(text=';', font_size=50, color=(1, 1, 1, 1))  # White letter
-        self.label8.center = (lane_to_pos[8], y)  # Position the label in the center of the triangle
-                
-        self.add_widget(self.label1)
-        self.add_widget(self.label2)
-        self.add_widget(self.label3)
-        self.add_widget(self.label4)
-        self.add_widget(self.label5)
-        self.add_widget(self.label6)
-        self.add_widget(self.label7)
-        self.add_widget(self.label8)
         self.add_widget(self.info)
 
     def on_key_down(self, keycode, modifiers):
@@ -230,11 +196,11 @@ class SongData(object):
     def get_downbeat(self):
         return self.downbeat
 
-def draw_triangle(x, y, size):
-    points = []
-    # Define the points of the triangle
-    points = [x-40, y-40, x+40, y-40, x, y+40, x-40, y-40]
-    return points
+# def draw_triangle(x, y, size):
+#     points = []
+#     # Define the points of the triangle
+#     points = [x-40, y-40, x+40, y-40, x, y+40, x-40, y-40]
+#     return points
 
 # Display for a single gem at a position with a hue or color
 class GemDisplay(InstructionGroup):
@@ -245,7 +211,8 @@ class GemDisplay(InstructionGroup):
         self.time = time
         self.color = Color(*color)
 
-        self.gem = Line(width=1)
+        size = 20 # make dynamic?
+        self.gem = CEllipse(csize=(size, size), segments=20)
         self.gem_lowest_y_value = 0
         self.hit = False
         self.on_screen = False
@@ -254,6 +221,10 @@ class GemDisplay(InstructionGroup):
         self.add(self.gem)
         
         self.color_appear_anim = KFAnim((self.time-1, 0), (self.time, 1))
+
+        self.label1 = Label(text='A', font_size=50, color=(1, 1, 1, 1))  # White letter
+        self.label1.center = (lane_to_pos[1], y)  # Position the label in the center of the triangle
+        self.add_widget(self.label1)
 
     # change to display this gem being hit
     def on_hit(self):
@@ -265,17 +236,12 @@ class GemDisplay(InstructionGroup):
     # change to display a passed or missed gem
     def on_pass(self):
         self.hit = True
+        self.gem.segments=3
 
     def on_resize(self, win_size):
         self._resize(win_size)
     
     def _resize(self, win_size):
-        x1 = win_size[0] * (nowbar_w_margin + 0.01)
-        x2 = win_size[0] * (1- nowbar_w_margin - 0.01)
-        dist = (x2 - x1)/7
-        lane_to_pos = {1:x1, 2:x1 + dist, \
-        3:x1 + 2*dist, 4:x1 + 3*dist, 5:x1 + 4*dist, 6:x1 + 5*dist, \
-        7:x1 + 6*dist, 8:x1 + 7*dist}
         x = lane_to_pos[self.lane]
         self.gem.points = draw_triangle(x,self.y, win_size[0]/32)
         self.gem_lowest_y_value = self.gem.points[1]
