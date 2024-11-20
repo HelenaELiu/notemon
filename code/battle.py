@@ -24,6 +24,18 @@ box_width = 7/20 #width of boxes
 box_height = 1/6 #height of boxes
 radius_margin = 1/16 #radius of notemon circles
 
+MAJOR_KEY = [0, 2, 4, 5, 7, 9, 11, 12]
+MINOR_KEY = [0, 2, 3, 5, 7, 8, 10, 12]
+MAJOR_KEY_TO_IDX = { MAJOR_KEY[x] : x for x in range(len(MAJOR_KEY)) }
+MINOR_KEY_TO_IDX = { MINOR_KEY[x] : x for x in range(len(MINOR_KEY)) }
+
+NUM_ATTACKS = 4
+DAMAGE_MULTIPLIER = 6
+
+PLAYER_NOTE_TIME = 1
+OPP_NOTE_TIME = 8
+
+INTERVAL = 2 # Third
 
 class MainWidget(BaseWidget):
     def __init__(self):
@@ -32,7 +44,10 @@ class MainWidget(BaseWidget):
         self.canvas.add(self.display)
 
         self.audio_ctrl = AudioController()
-        self.player = Player(self.audio_ctrl, self.display)
+        self.player = Player(self.audio_ctrl, self.display, 58)
+        self.opp = Opponent(.3, self.audio_ctrl)
+        self.player.set_opponent(self.opp)
+        self.opp.set_player(self.player)
 
         self.info = topleft_label()
         self.add_widget(self.info)
@@ -49,11 +64,39 @@ class MainWidget(BaseWidget):
         elif keycode[1] == "enter":
             self.player.on_button_enter()
 
+        if keycode[1] == 'x':
+            self.opp.launch_attack(1)
+
+        # Defense
+        note = lookup(keycode[1], 'asdfjkl;' , (0, 1, 2, 3, 4, 5, 6, 7))
+        if note is not None:
+            if self.opp.attacking and self.player.defending:
+                # Note match!!
+                if note == MINOR_KEY_TO_IDX[(self.opp.note - key['fifth_symphony'][0])] + INTERVAL:
+                    self.player.on_defense(MINOR_KEY[note]+key['fifth_symphony'][0])
+                else:
+                    self.player.incorrect_defense()
+            else:
+                print("Opponent not attacking or we already tried!")
+
     def on_update(self):
+        self.info.text = f'player damage: {self.player.damage}\n'
+        self.info.text += f'opp damage: {self.opp.damage}\n'
+
         self.player.on_update()
 
-        self.info.text = 'Let\'s Battle!\n'
+        #self.info.text = 'Let\'s Battle!\n'
 
+# Attack wrapper
+class Attack:
+    def __init__(self, notes):
+        self.notes = notes
+
+    def get_note(self, idx):
+        return self.notes[idx]
+
+    def last_note(self, idx):
+        return idx == len(self.notes) - 1
 
 # Display for a single notemon sprite
 class NotemonDisplay(InstructionGroup):
@@ -95,6 +138,7 @@ class NotemonDisplay(InstructionGroup):
         self.label = CLabelRect(cpos = (self.x, self.y), text = str(self.health))
         self.add(self.label)
 
+key = {'fifth_symphony' : (60, 'minor')}
 
 winter = ((240, 60), (240, 72), (240, 67), (240, 63), 
           (240, 60), (240, 72), (240, 67), (240, 63), (240, 60),)
@@ -105,7 +149,6 @@ fur_elise = ((240, 76), (240, 75), (240, 76), (240, 75),
 magic_flute = ((120, 69), (120, 67), (120, 69), (120, 70), 
                (240, 72), (240, 72), (240, 72), (240, 72), 
                (240, 72), (240, 72), (240, 72), (240, 72), (240 * 4, 65),)
-
 
 class AudioController(object):
     def __init__(self):
@@ -124,17 +167,10 @@ class AudioController(object):
         #create song
         self.seqs = []
 
-        self.seq1 = NoteSequencer(self.sched, self.synth, 1, (0,88), winter, False)
-        self.seqs.append(self.seq1)
+        self.attacks = [Attack(winter), Attack(fifth_symphony), Attack(fur_elise), Attack(magic_flute)]
 
-        self.seq2 = NoteSequencer(self.sched, self.synth, 1, (0,88), fifth_symphony, False)
-        self.seqs.append(self.seq2)
-
-        self.seq3 = NoteSequencer(self.sched, self.synth, 1, (0,88), fur_elise, False)
-        self.seqs.append(self.seq3)
-
-        self.seq4 = NoteSequencer(self.sched, self.synth, 1, (0,88), magic_flute, False)
-        self.seqs.append(self.seq4)
+        self.next_note_cmd = None
+        self.defense_note = None
     
     def play(self, index):
         self.seqs[index].start()
@@ -142,6 +178,12 @@ class AudioController(object):
     # needed to update audio
     def on_update(self):
         self.audio.on_update()
+
+    # Called by opponent
+    def on_opp_defense(self):
+        print("Successful defense!")
+        if self.next_note_cmd:
+            self.sched.cancel(self.next_note_cmd)
 
 
 # Displays all game elements: attack boxes, notemon sprites
@@ -248,18 +290,26 @@ class GameDisplay(InstructionGroup):
         self.notemon_opponent.on_update()
         self.notemon_us.on_update()
 
-
 # Handles game logic.
 # Controls the GameDisplay and AudioCtrl based on what happens
 class Player(object):
-    def __init__(self, audio_ctrl, display):
+    def __init__(self, audio_ctrl, display, key):
         super(Player, self).__init__()
+
+        self.key = key
 
         self.audio_ctrl = audio_ctrl
         self.display = display
 
         self.our_turn = True
         self.complete = False
+
+        self.defending = False
+        self.opponent = None
+        self.damage = 0
+
+    def set_opponent(self, opponent):
+        self.opponent = opponent
 
     # called by MainWidget
     def on_button_down(self):
@@ -276,27 +326,143 @@ class Player(object):
     # called by MainWidget
     def on_button_right(self):
         self.display.on_button_right()
-    
+
     # called by MainWidget
     def on_button_enter(self):
         if not self.complete: 
             #make sure battle is not over
             if self.our_turn:
                 current_box = self.display.current_box
-                self.audio_ctrl.play(current_box)
+                self.launch_attack(current_box)
                 self.display.attack_opponent(current_box)
                 self.our_turn = False
             else:
                 opponent_box = random.randint(0, 3)
-                self.audio_ctrl.play(opponent_box)
+                self.opponent.launch_attack(opponent_box)
                 self.display.lose_health(opponent_box)
                 self.our_turn = True
             
             self.complete = self.display.check_complete()
 
+    # Scheduled during attack
+    def note_off(self, tick, attack, note):
+        _, pitch = self.audio_ctrl.attacks[attack].get_note(note)
+        self.audio_ctrl.synth.noteoff(0, pitch)
+
+    # Scheduled during attack
+    def next_note(self, tick, attack, note):
+        length, pitch = self.audio_ctrl.attacks[attack].get_note(note)
+        self.audio_ctrl.synth.noteon(0, pitch, 100)
+        self.audio_ctrl.sched.post_at_tick(self.note_off, tick + length*.95, [attack, note])
+
+        if self.audio_ctrl.attacks[attack].last_note(note):
+            self.audio_ctrl.next_note_cmd = None
+            self.opponent.on_attack()
+            return
+
+        self.audio_ctrl.next_note_cmd = self.audio_ctrl.sched.post_at_tick(self.next_note, tick + length, [attack, note+1])
+        self.opponent.on_attack()
+
+    # Called by MainWidget
+    def launch_attack(self, attack):
+        now = quantize_tick_up(self.audio_ctrl.sched.get_tick(), 480)
+
+        self.audio_ctrl.next_note_cmd = self.audio_ctrl.sched.post_at_tick(self.next_note, now, [attack, 0])
+
+    # REACTIONS TO GAME EVENTS
+
+    # called by MainWidget
+    def on_defense(self, note):
+        self.audio_ctrl.synth.noteon(1, note, 100)
+        self.audio_ctrl.defense_note = note
+
+        self.defending = False
+
+    # called by MainWidget
+    def incorrect_defense(self):
+        self.defending = False
+        self.take_damage()
+
+    # called by MainWidget
+    def take_damage(self):
+        self.damage += DAMAGE_MULTIPLIER
+
     def on_update(self):
         self.audio_ctrl.on_update()
         self.display.on_update()
+
+class Opponent():
+    def __init__(self, skill, audio_ctrl):
+        self.skill = skill
+        assert skill > 0 and skill < 1, "Skill must be 0 to 1 exclusive"
+
+        self.audio_ctrl = audio_ctrl
+
+        self.attacking = False
+
+        self.damage = 0
+
+        self.player = None
+
+        self.note = None
+
+    def set_player(self, player):
+        self.player = player
+
+    def set_attack(self):
+        self.attacking = True
+        self.player.defending = True
+
+    def player_timeout(self):
+        if self.player.defending:
+            self.player.take_damage()
+
+    def unset_attack(self):
+        self.attacking = False
+
+        self.player_timeout()
+        self.player.defending = False
+
+    # Scheduled during attack
+    def note_off(self, tick, attack, note):
+        if self.audio_ctrl.defense_note:
+            self.audio_ctrl.synth.noteoff(1, self.audio_ctrl.defense_note)
+            self.audio_ctrl.defense_note = None
+
+        length, pitch = self.audio_ctrl.attacks[attack].get_note(note)
+        self.audio_ctrl.synth.noteoff(0, pitch)
+        self.note = None
+        self.player_timeout()
+
+        if self.audio_ctrl.attacks[attack].last_note(note):
+            self.unset_attack()
+
+    # Scheduled during attack
+    def next_note(self, tick, attack, note):
+        self.set_attack()
+
+        length, pitch = self.audio_ctrl.attacks[attack].get_note(note)
+        self.audio_ctrl.synth.noteon(0, pitch, 100)
+        self.note = pitch
+        self.audio_ctrl.sched.post_at_tick(self.note_off, tick + length*.95, [attack, note])
+
+        if self.audio_ctrl.attacks[attack].last_note(note):
+            return
+
+        self.audio_ctrl.sched.post_at_tick(self.next_note, tick + length, [attack, note+1])
+
+    # Called by MainWidget
+    def launch_attack(self, attack):
+        now = quantize_tick_up(self.audio_ctrl.sched.get_tick(), 480)
+
+        self.audio_ctrl.sched.post_at_tick(self.next_note, now, [attack, 0])
+
+    def on_attack(self):
+        # Successful defense
+        if random.random() < self.skill:
+            self.audio_ctrl.on_opp_defense()
+        else:
+            self.damage += DAMAGE_MULTIPLIER
 
 
 if __name__ == "__main__":
