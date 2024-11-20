@@ -17,6 +17,7 @@ from imslib.synth import Synth
 import random
 
 from AttackDisplay import AttackDisplay
+from attack import Attack
 
 x_margin = 1/10 #distance from sides of boxes to edge of screen
 y_margin = 1/20 #distance from bottom of boxes to edge of screen
@@ -105,17 +106,6 @@ class MainWidget(BaseWidget):
         self.player.on_update()
 
         #self.info.text = 'Let\'s Battle!\n'
-
-# Attack wrapper
-class Attack:
-    def __init__(self, notes):
-        self.notes = notes
-
-    def get_note(self, idx):
-        return self.notes[idx]
-
-    def last_note(self, idx):
-        return idx == len(self.notes) - 1
 
 # Display for a single notemon sprite
 class NotemonDisplay(InstructionGroup):
