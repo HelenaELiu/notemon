@@ -323,8 +323,9 @@ class AudioScheduler(object):
     @staticmethod
     def cmd_to_name(func, tick, args):
         cmdName = f'{func.__name__}_{tick}'
-        for a in args:
-            cmdName += f'_{a}'
+        if args:
+            for a in args:
+                cmdName += f'_{a}'
         return cmdName
 
     def generate(self, num_frames, num_channels):
@@ -407,7 +408,7 @@ class AudioScheduler(object):
 
         # create a command to hold the function/arg and sort by tick
         cmd = Command(tick, func, args)
-        cmdName = self.cmd_to_name(func, tick, args)
+        cmdName = self.cmd_to_name(cmd.func, cmd.tick, cmd.args)
         self.command_map[cmdName] = cmd
 
         self.commands.append(cmd)
@@ -453,7 +454,10 @@ class Command(object):
         super(Command, self).__init__()
         self.tick = int(tick)
         self.func = func
-        self.args = args
+        if hasattr(args, '__iter__') or args is None:
+            self.args = args
+        else:
+            self.args = [args]
         self.did_it = False
 
     def execute(self):
