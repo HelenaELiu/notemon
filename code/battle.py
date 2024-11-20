@@ -28,6 +28,20 @@ MAJOR_KEY = [0, 2, 4, 5, 7, 9, 11, 12]
 MINOR_KEY = [0, 2, 3, 5, 7, 8, 10, 12]
 MAJOR_KEY_TO_IDX = { MAJOR_KEY[x] : x for x in range(len(MAJOR_KEY)) }
 MINOR_KEY_TO_IDX = { MINOR_KEY[x] : x for x in range(len(MINOR_KEY)) }
+CHORDS = [
+    [0, 2, 4, 7], 
+    [0, 2, 5, 7], 
+    [0, 3, 5, 7], 
+    [1, 3, 5],
+    [1, 4, 6],
+    [1, 3, 7],
+    [2, 4, 6]
+]
+INTERVALS = {x : [] for x in range(8)}
+for c in CHORDS:
+    for i in range(len(c)):
+        INTERVALS[c[i]].append(set(c[0:i]+c[i+1:]))
+print(INTERVALS)
 
 NUM_ATTACKS = 4
 DAMAGE_MULTIPLIER = 6
@@ -72,8 +86,13 @@ class MainWidget(BaseWidget):
         if note is not None:
             if self.opp.attacking and self.player.defending:
                 # Note match!!
-                if note == MINOR_KEY_TO_IDX[(self.opp.note - key['fifth_symphony'][0])] + INTERVAL:
-                    self.player.on_defense(MINOR_KEY[note]+key['fifth_symphony'][0])
+                root, key_type = key['fifth_symphony']
+                note_to_match = MINOR_KEY_TO_IDX[self.opp.note - root] if key_type == 'minor' else MAJOR_KEY_TO_IDX[self.opp_note - root]
+                intervals = [i for i in INTERVALS[note_to_match] if note in i]
+
+                if intervals != []:
+                    note = MINOR_KEY[note] + root if key_type == 'minor' else MAJOR_KEY[note] + root
+                    self.player.on_defense(note)
                 else:
                     self.player.incorrect_defense()
             else:
@@ -444,12 +463,12 @@ class Opponent():
         length, pitch = self.audio_ctrl.attacks[attack].get_note(note)
         self.audio_ctrl.synth.noteon(0, pitch, 100)
         self.note = pitch
-        self.audio_ctrl.sched.post_at_tick(self.note_off, tick + length*.95, [attack, note])
+        self.audio_ctrl.sched.post_at_tick(self.note_off, tick + 4*length*.95, [attack, note])
 
         if self.audio_ctrl.attacks[attack].last_note(note):
             return
 
-        self.audio_ctrl.sched.post_at_tick(self.next_note, tick + length, [attack, note+1])
+        self.audio_ctrl.sched.post_at_tick(self.next_note, tick + 4*length, [attack, note+1])
 
     # Called by MainWidget
     def launch_attack(self, attack):

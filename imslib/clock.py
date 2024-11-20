@@ -305,7 +305,6 @@ class AudioScheduler(object):
         super(AudioScheduler, self).__init__()
         self.tempo_map = tempo_map
         self.commands = []
-        self.command_map = {}
 
         self.generator = None
         self.cur_frame = 0
@@ -354,7 +353,7 @@ class AudioScheduler(object):
             if cmd_frame < end_frame:
                 o_idx = self._generate_until(cmd_frame, num_channels, output, o_idx)
                 command = self.commands.pop(0)
-                del self.command_map[self.cmd_to_name(command.func, command.tick, command.args)]
+                # del self.command_map[self.cmd_to_name(command.func, command.tick, command.args)]
                 command.execute()
             else:
                 break
@@ -408,13 +407,14 @@ class AudioScheduler(object):
 
         # create a command to hold the function/arg and sort by tick
         cmd = Command(tick, func, args)
-        cmdName = self.cmd_to_name(cmd.func, cmd.tick, cmd.args)
-        self.command_map[cmdName] = cmd
+        # cmdName = self.cmd_to_name(cmd.func, cmd.tick, cmd.args)
+        # print(cmdName)
+        # self.command_map[cmdName] = cmd
 
         self.commands.append(cmd)
         self.commands.sort(key = lambda x: x.tick)
 
-        return cmdName
+        return cmd
 
     # attempt a removal. Does nothing if cmd is not found
     def cancel(self, cmdName):
@@ -424,10 +424,14 @@ class AudioScheduler(object):
 
         :param cmd: The command object to remove.
         """
-        del self.command_map[cmdName]
+        # del self.command_map[cmdName]
 
-        self.commands = list(self.command_map.values())
-        self.commands.sort(key = lambda x: x.tick)
+        # self.commands = list(self.command_map.values())
+        # self.commands.sort(key = lambda x: x.tick)
+
+        idx = self.commands.index(cmdName)
+        if idx != -1:
+            self.commands.pop(idx)
 
     def now_str(self):
         """
