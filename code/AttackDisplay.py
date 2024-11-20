@@ -23,10 +23,6 @@ box_height = 1/6 #height of boxes
 class AttackDisplay(InstructionGroup):
     def __init__(self, index, name, damage, show):
         super(AttackDisplay, self).__init__()
-        self.audio = Audio(2)
-        self.mixer = Mixer()
-        self.audio.set_generator(self.mixer)
-
         self.index = index
         self.name = name
         self.damage = damage

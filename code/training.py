@@ -11,6 +11,7 @@ from imslib.synth import Synth
 from imslib.clock import SimpleTempoMap, AudioScheduler, kTicksPerQuarter, quantize_tick_up
 from imslib.gfxutil import topleft_label, CEllipse, CRectangle, CLabelRect
 from functools import reduce
+from AttackDisplay import AttackDisplay
 
 from kivy.graphics.instructions import InstructionGroup
 from kivy.graphics import Color, Ellipse, Line, Rectangle
@@ -37,7 +38,6 @@ winter = ((240, 60), (240, 72), (240, 67), (240, 63),
 song_time = reduce(lambda a,x: a+x[0], winter, 0)
 lanes = (60, 62, 63, 65, 67, 69, 71, 72) # can change; should change for every song?
 metro = ((480, 60),)
-
 
 # for dynamic nowbar on lane
 max_x = (1 - lane_w_margin)
@@ -143,6 +143,7 @@ class AudioController(object):
         self.metro.start()
         self.solo.start()
         next_beat = quantize_tick_up(curr_tick, kTicksPerQuarter) # this is when the above noteseqs start
+        # self.sched.post_at_tick(self._play_song, next_beat)
         self.song_start_tick = next_beat
         self.training = True
 
@@ -152,6 +153,12 @@ class AudioController(object):
         # start metro again so player knows beat
         player_start = next_beat + metro_time + self.total_solo_time + 480
         self.sched.post_at_tick(self._player_turn, player_start)
+
+    # def _play_song(self, tick):
+    #     print('playing', tick)
+    #     self.metro.start()
+    #     self.solo.start()
+    #     self.song_start_tick = tick
 
     def _stop_metro(self, tick):
         self.metro.stop()
