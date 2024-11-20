@@ -1,542 +1,508 @@
-#####################################################################
-#
-# This software is to be used for MIT's class Interactive Music Systems only.
-# Since this file may contain answers to homework problems, you MAY NOT release it publicly.
-#
-#####################################################################
-
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
 
 from imslib.core import BaseWidget, run, lookup
 from imslib.audio import Audio
 from imslib.mixer import Mixer
-from imslib.note import NoteGenerator, Envelope
 from imslib.wavegen import WaveGenerator
 from imslib.wavesrc import WaveBuffer, WaveFile
-from imslib.gfxutil import topleft_label, resize_topleft_label, CLabelRect, KFAnim, AnimGroup, CEllipse
-from kivy.uix.label import Label
-from kivy.uix.widget import Widget
+# from imslib.noteseq import NoteSequencer
+from imslib.synth import Synth
+from imslib.clock import SimpleTempoMap, AudioScheduler, kTicksPerQuarter, quantize_tick_up
+from imslib.gfxutil import topleft_label, CEllipse, CRectangle, CLabelRect
+from functools import reduce
 
 from kivy.graphics.instructions import InstructionGroup
 from kivy.graphics import Color, Ellipse, Line, Rectangle
 from kivy.core.window import Window
 
-from kivy.clock import Clock
+from noteseq2 import NoteSequencer2
 
-from math import cos, sin, radians
 
-# configuration parameters:
-nowbar_h = 0.2        # height of nowbar from the bottom of screen (as proportion of window height)
-nowbar_w_margin = 0.1 # margin on either side of the nowbar (as proportion of window width)
-time_span = 2.0       # time (in seconds) that spans the full vertical height of the Window
-beat_marker_len = 0.2 # horizontal length of beat marker (as a proportion of window width)
+btns = "asdfjkl;"
+lane_h = 0.8       # height of lane
+btn_h = 0.2        # height of btns from the bottom of screen (as proportion of window height)
+lane_w_margin = 0.1
+# btn_w_margin = 0.1 # margin on either side of the btns (as proportion of window width)
+space_betw_btns = 0.1
+# time_span = 2.0       # time (in seconds) that spans the full vertical height of the Window
+accuracy_window = 100 # num seconds window
+button_width = 0.9 # of the space betw lines
+nowbar_h = 0.1
 
-C_major_scale = [60, 62, 64, 65, 67, 69, 71, 72]
-notes = {1: NoteGenerator(C_major_scale[1], 0.5, 'sine'), 1: NoteGenerator(C_major_scale[1], 0.5, 'sine'),
-1: NoteGenerator(C_major_scale[1], 0.5, 'sine'), 1: NoteGenerator(C_major_scale[1], 0.5, 'sine'),
-1: NoteGenerator(C_major_scale[1], 0.5, 'sine'), 1: NoteGenerator(C_major_scale[1], 0.5, 'sine'),
-1: NoteGenerator(C_major_scale[1], 0.5, 'sine'), 1: NoteGenerator(C_major_scale[1], 0.5, 'sine'),}
-# self.mixer.add(Envelope(notes[lane], 0.01, 1, 1, 1))
+max_x = (1 - lane_w_margin)
+min_x = lane_w_margin
 
-x1 = Window.width * (nowbar_w_margin + 0.01)
-x2 = Window.width * (1- nowbar_w_margin - 0.01)
-dist = (x2 - x1)/7
-lane_to_pos = {1:x1, 2:x1 + dist, \
-        3:x1 + 2*dist, 4:x1 + 3*dist, 5:x1 + 4*dist, 6:x1 + 5*dist, \
-        7:x1 + 6*dist, 8:x1 + 7*dist}
+metro_time = 480 * 4
+winter = ((240, 60), (240, 72), (240, 67), (240, 63), 
+          (240, 60), (240, 72), (240, 67), (240, 63), (240, 60),)
+song_time = reduce(lambda a,x: a+x[0], winter, 0)
+lanes = (60, 62, 63, 65, 67, 69, 71, 72) # can change; should change for every song?
+metro = ((480, 60),)
 
+
+def tick_to_xpos(tick):
+    # TODO write this
+    maxx = Window.width * max_x
+    minx = Window.width * min_x
+    return tick * (maxx - minx) / (song_time + metro_time) + minx
 
 class MainWidget(BaseWidget):
     def __init__(self):
         super(MainWidget, self).__init__()
 
-        song_base_name = 'MoreThanAFeeling'
-        
-        self.audio = Audio(1)
-        self.mixer = Mixer()
-        self.audio.set_generator(self.mixer)
+        print('hi')
+        # audio
+        self.audio_ctrl = AudioController()
 
-        self.song_data = SongData(song_base_name)
-        self.audio_ctrl = AudioController(song_base_name)
-        self.display = GameDisplay(self.song_data)
-        self.player = Player(self.song_data, self.audio_ctrl, self.display)
+        # song data
+        sd = [(duration, lanes.index(pitch)) for duration, pitch in winter]
+        tot = metro_time
+        gems = []
+        for gem in sd:
+            gems += [(tot, gem[1])]
+            tot += gem[0]
 
-        self.canvas.add(self.display)
-        
+        # game display
+        self.game_display = GameDisplay(gems)
+        self.canvas.add(self.game_display)
+
+        # player needs the above
+        self.player = Player(gems, self.audio_ctrl, self.game_display)
+
         self.info = topleft_label()
         self.add_widget(self.info)
 
     def on_key_down(self, keycode, modifiers):
         # play / pause toggle
         if keycode[1] == 'p':
-            self.audio_ctrl.toggle()
+            if not self.audio_ctrl.training:
+                self.audio_ctrl.play()
+                self.player.done = False
 
         # button down
-        button_idx = lookup(keycode[1], 'asdfjkl;', (0,1,2,3,4,5,6,7))
+        button_idx = lookup(keycode[1], btns, (0,1,2,3,4,5,6,7))
         if button_idx != None:
             # print('down', button_idx)
-            self.player.on_button_down(button_idx+1) # to adjust for lanes being from 1-5
+            self.player.on_button_down(button_idx)
 
     def on_key_up(self, keycode):
         # button up
-        button_idx = lookup(keycode[1], 'asdfjkl;', (0,1,2,3,4,5,6,7))
+        button_idx = lookup(keycode[1], btns, (0,1,2,3,4,5,6,7))
         if button_idx != None:
             # print('up', button_idx)
-            self.player.on_button_up(button_idx+1)
+            self.player.on_button_up(button_idx)
 
     # handle changing displayed elements when window size changes
     # This function should call GameDisplay.on_resize
     def on_resize(self, win_size):
-        resize_topleft_label(self.info)
-        self.display.on_resize(win_size)
+        self.game_display.on_resize(win_size)
 
     def on_update(self):
-        self.audio.on_update()
         self.audio_ctrl.on_update()
-
-        now = self.audio_ctrl.get_time()
-        self.display.on_update(now)
+        # everyone uses audio's time now
+        now = self.audio_ctrl.get_tick()
+        self.game_display.on_update(now)
         self.player.on_update(now)
 
         self.info.text = 'p: pause/unpause song\n'
         self.info.text += f'song time: {now:.2f}\n'
-        self.info.text += f'score: {self.display.score}\n'
+        # self.info.text += f'num objects: {self.game_display.get_num_object()}\n'
+        self.info.text += f'score: {self.player.score}'
 
-# Handles everything about Audio.
-#   creates the main Audio object
-#   load and plays solo and bg audio tracks
-#   creates audio buffers for sound-fx (miss sound)
-#   functions as the clock (returns song time elapsed)
 class AudioController(object):
-    def __init__(self, song_path):
+    def __init__(self):
         super(AudioController, self).__init__()
         self.audio = Audio(2)
+        self.synth = Synth()
+        # create TempoMap, AudioScheduler
+        self.tempo_map  = SimpleTempoMap(120)
+        self.sched = AudioScheduler(self.tempo_map)
+
+        # connect scheduler into audio system
+        self.audio.set_generator(self.sched)
+        self.sched.set_generator(self.synth)
         self.mixer = Mixer()
-        self.audio.set_generator(self.mixer)
+        # self.audio.set_generator(self.mixer)
 
-        # song
-        self.bg_track = WaveGenerator(WaveFile(song_path + "_bg.wav"))
-        self.solo_track = WaveGenerator(WaveFile(song_path + "_solo.wav"))
-        self.mixer.add(self.bg_track)
-        self.mixer.add(self.solo_track)
+        # background
+        # self.bg = WaveGenerator(WaveFile(song_path + " background.wav"))
+        # self.mixer.add(self.bg)
+        # self.solo = WaveGenerator(WaveFile(song_path + " solo.wav"))
 
-        # start paused
-        self.bg_track.pause()
-        self.solo_track.pause()
+        self.solo = NoteSequencer2(self.sched, self.synth, 0, (0,88), winter, False, wait=metro_time)
+        self.metro = NoteSequencer2(self.sched, self.synth, 1, (128, 0), metro, True, wait=0)
+        self.total_solo_time = song_time
+        # self.mixer.add(self.solo)
+
+        # start ready
+        self.training = False
+        self.player = False
+        self.song_start_tick = -10000
 
     # start / stop the song
-    def toggle(self):
-        self.bg_track.play_toggle()
-        self.solo_track.play_toggle()
+    def play(self):
+        curr_tick = self.sched.get_tick()
+
+        self.metro.start()
+        self.solo.start()
+        next_beat = quantize_tick_up(curr_tick, kTicksPerQuarter)
+        # self.solo.start()
+        # self.metro.start()
+        self.sched.post_at_tick(self._play_song, next_beat)
+        self.training = True
+        self.sched.post_at_tick(self._stop_metro, next_beat + metro_time + self.total_solo_time)
+
+
+        player_start = next_beat + metro_time + self.total_solo_time + 480
+        self.sched.post_at_tick(self._player_turn, player_start)
+
+    def _play_song(self, tick):
+        print('playing', tick)
+        self.metro.start()
+        self.solo.start()
+        self.song_start_tick = tick
+
+    def _stop_metro(self, tick):
+        self.metro.stop()
+
+    def _player_turn(self, tick):
+        print('hi')
+        self.metro.start()
+        print('player turn', tick)
+        self.player = True
+        self.song_start_tick = quantize_tick_up(tick, kTicksPerQuarter)
+        print(self.song_start_tick, metro_time)
+        self.sched.post_at_tick(self._set_to_normal, self.song_start_tick + metro_time + self.total_solo_time)
+
+    def _set_to_normal(self, tick):
+        self.metro.stop()
+        self.training = False
+        self.player = False
+        print(tick - self.song_start_tick, metro_time + self.total_solo_time)
+        self.song_start_tick = -10000
+        print('normal', tick)
 
     # mute / unmute the solo track
     def set_mute(self, mute):
-        if mute is True:
-            self.solo_track.set_gain(0)
-        elif mute is False:
-            self.solo_track.set_gain(1) # want track to continue playing just mute and unmute
+        if mute:
+            self.solo.set_gain(0) # turn gain down
+        else:
+            self.solo.set_gain(1) # bring back to normal
 
     # play a sound-fx (miss sound)
     def play_miss(self):
-        self.miss_sound = WaveGenerator(WaveFile("miss_sound.wav"))
-        self.mixer.add(self.miss_sound)
-        self.miss_sound.play()
+        # add wacky sound to mixer
+        # self.mixer.add(WaveGenerator(WaveFile("fail.wav")))
+        pass
 
     # return current time (in seconds) of song
-    def get_time(self):
-        return self.bg_track.frame / Audio.sample_rate
+    def get_tick(self):
+        # return self.solo.frame / Audio.sample_rate
+        return self.sched.get_tick() - self.song_start_tick
 
     # needed to update audio
     def on_update(self):
         self.audio.on_update()
 
-# for parsing gem text file: return (time, lane) from a single line of text
-def lane_from_line(line):
-    time, lane = line.strip().split('\t')
-    # lane_to_color_dict = {1: (0, 1, 1), \
-    #     2: (1, 0, 0), 3: (1, 1, 0), \
-    #     4: (1, 0, 1), 5: (1, 0.647, 0)}
+class ButtonDisplay(InstructionGroup):
+    def __init__(self, lane, color):
+        super(ButtonDisplay, self).__init__()
 
-    lane_to_color_dict = {
-    1: (1, 0, 0),    # Red 
-    2: (0, 1, 0),    # Green
-    3: (0, 0, 1),    # Blue
-    4: (1, 1, 0),    # Yellow
-    5: (0, 1, 1),    # Cyan
-    6: (1, 0, 1),    # Magenta
-    7: (1, 1, 1),    # White
-    8: (1, 0.647, 0) # Orange
-    }
-    return (int(lane), float(time), lane_to_color_dict[int(lane)])
+        self.lane = lane
+        self.x = Window.width // 2 + Window.width * space_betw_btns * (-3.5 + lane)
 
-def time_from_line(line):
-    time, beat = line.strip().split('\t')
-    return float(time)
+        self.color = Color(hsv=color)
+        self.add(self.color)
+        size = space_betw_btns * Window.width * button_width
+        # y_size = 0.1 * Window.height
+        self.button = CEllipse(csize=(size, size), cpos=(self.x, btn_h * Window.height), segments=3)
+        self.add(self.button)
 
-# Holds data for gems and downbeats.
-class SongData(object):
-    def __init__(self, song_base):
-        super(SongData, self).__init__()
-        self.gem_beats = []
-        self.downbeat = []
+        self.add(Color(hsv=(1,0,1)))
+        self.label = CLabelRect(cpos=(self.x, btn_h * Window.height), text=btns[lane])
+        self.add(self.label)
 
-    # TODO: figure out how gem and downbeat data should be represented and accessed...
-        gem_beats_file = song_base + '_solo_beats copy.txt'
-        lines = open(gem_beats_file).readlines()
-        self.gem_beats = [lane_from_line(l) for l in lines]
+    # displays when button is pressed down
+    def on_down(self):
+        self.color.hsv = (1/8 * self.lane,1,1)
 
-        downbeat_file = song_base + '_bg_beats copy.txt'
-        lines = open(downbeat_file).readlines()
-        self.downbeat = [time_from_line(l) for l in lines]
+    # back to normal state
+    def on_up(self):
+        self.color.hsv = (1/8 * self.lane,0.9,0.5)
 
-    def get_gem_beats(self):
-        return self.gem_beats
+    # modify object positions based on new window size
+    def on_resize(self, win_size):
+        self.x = win_size[0] // 2 + win_size[0] * space_betw_btns * (-3.5 + self.lane)
+        size = space_betw_btns * win_size[0] * button_width
+        # y_size = 0.1 * Window.height
+        # y_size = accuracy_window * 2 / time_span * Window.height
+        self.button.csize = (size, size)
+        self.button.cpos=(self.x, btn_h * win_size[1])
+        self.label.cpos = (self.x, btn_h * win_size[1])
 
-    def get_downbeat(self):
-        return self.downbeat
+class NowbarDisplay(InstructionGroup):
+    def __init__(self):
+        super(NowbarDisplay, self).__init__()
 
-# def draw_triangle(x, y, size):
-#     points = []
-#     # Define the points of the triangle
-#     points = [x-40, y-40, x+40, y-40, x, y+40, x-40, y-40]
-#     return points
+        self.color = Color(hsv=(.1, .8, 1)) # color of this beat line
+        self.line = Line(width = 3) # line object to be drawn / animated in on_update()
 
-# Display for a single gem at a position with a hue or color
+        self.add(self.color)
+        self.add(self.line)
+
+    # animate the position based on current time
+    def on_update(self, now_tick):
+        x = tick_to_xpos(now_tick)
+        self.line.points = (x, lane_h * Window.height - nowbar_h * Window.height / 2, x, lane_h * Window.height + nowbar_h * Window.height / 2)
+
+        return x < max_x * Window.width and x > min_x * Window.width
+    
 class GemDisplay(InstructionGroup):
     def __init__(self, lane, time, color):
         super(GemDisplay, self).__init__()
 
         self.lane = lane
         self.time = time
-        self.color = Color(*color)
 
-        size = 20 # make dynamic?
-        self.gem = CEllipse(csize=(size, size), segments=20)
-        self.gem_lowest_y_value = 0
-        self.hit = False
-        self.on_screen = False
+        # center lanes around center of screen
+        # self.x = (Window.width // 2) + Window.width * space_betw_lanes * (-2 + lane)
+        self.x = tick_to_xpos(time)
+        self.y = lane_h * Window.height
 
+        self.true_hsv = color
+        self.color = Color(hsv=(1,0,1))
         self.add(self.color)
-        self.add(self.gem)
-        
-        self.color_appear_anim = KFAnim((self.time-1, 0), (self.time, 1))
 
-        self.label1 = Label(text='A', font_size=50, color=(1, 1, 1, 1))  # White letter
-        self.label1.center = (lane_to_pos[1], y)  # Position the label in the center of the triangle
-        self.add_widget(self.label1)
+        # diameter 1/2 of full space between lines
+        # size = space_betw_lanes * Window.width * 0.5 * 0.5
+        size = Window.width * (max_x - min_x) / (song_time + metro_time) * accuracy_window
+
+        self.gem = CEllipse(csize=(size, size), cpos=(self.x, self.y), segments=20)
+        self.add(self.gem)
+
+        self.hit = False
+        # self.line = None
 
     # change to display this gem being hit
     def on_hit(self):
-        if self.hit:
-            return # gem has already been hit
-        self.hit = True # mark as hit
-        self.remove(self.gem) 
+        # self.color.hsv = (1/5 * (self.lane),1,1)
+        if not self.hit:
+            self.color.hsv = self.true_hsv
+            self.gem.segments = 3
+            self.hit = True
+        # self.add(Color(hsv=(1/5 * (self.lane),1,1), a=0.2))
+
+        # this is short lived anyway but i guess should rescale
+        # self.line = Line(points=(self.x, 0, self.x, Window.height), width=space_betw_lanes * button_width * 0.5 * 0.8 * Window.width)
+        # self.add(self.line)
 
     # change to display a passed or missed gem
     def on_pass(self):
-        self.hit = True
-        self.gem.segments=3
+        if not self.hit:
+            self.color.hsv = (1/8 * (self.lane),0.1,0.1)
 
-    def on_resize(self, win_size):
-        self._resize(win_size)
-    
-    def _resize(self, win_size):
-        x = lane_to_pos[self.lane]
-        self.gem.points = draw_triangle(x,self.y, win_size[0]/32)
-        self.gem_lowest_y_value = self.gem.points[1]
-        
     # animate gem (position and animation) based on current time
     def on_update(self, now_time):
-
-        x1 = Window.width * (nowbar_w_margin + 0.01)
-        x2 = Window.width * (1- nowbar_w_margin - 0.01)
-        dist = (x2 - x1)/7
-        lane_to_pos = {1:x1, 2:x1 + dist, \
-        3:x1 + 2*dist, 4:x1 + 3*dist, 5:x1 + 4*dist, 6:x1 + 5*dist, \
-        7:x1 + 6*dist, 8:x1 + 7*dist}
-
-        # x = lane_to_pos[self.lane]
-        # self.y = time_to_ypos(self.time - now_time)
-
-        # x1 = Window.width * nowbar_w_margin
-        # x2 = Window.width * (1- nowbar_w_margin)
-        # dist = x2 - x1
-        # x = time_to_ypos(now_time - self.time)
-        x = lane_to_pos[self.lane]
-        self.y = (Window.height*0.8)+25
-
-        self.color.a = self.color_appear_anim.eval(now_time)
-        if now_time > self.time + 10:
-            x = time_to_ypos(now_time - self.time)
-        # self.color.a = self.color_disappear_anim.eval(now_time)
-
-        self.gem.points = draw_triangle(x,self.y, Window.width/32)
-        self.gem_lowest_y_value = self.gem.points[1]
-        # return if it is visible:
-        if 0 < self.gem_lowest_y_value < Window.height:
-            self.on_screen = True
-        else:
-            self.on_screen = False
-        return 0 < self.gem_lowest_y_value < Window.height 
-
-
-# Displays the location of a downbeat in the song
-class DownbeatDisplay(InstructionGroup):
-    def __init__(self, time):
-        super(DownbeatDisplay, self).__init__()
-
-        self.time = time
-        self.color = Color(hsv=(.1, .8, 1))
-        self.line = Line(width=3)
-
-        self.add(self.color)
-        self.add(self.line)
-
-    # animate the position based on current time
-    def on_update(self, now_time):
-
-        x1 = Window.width * (nowbar_w_margin + 0.01)
-        x2 = Window.width * (1- nowbar_w_margin - 0.01)
-        y = time_to_ypos(now_time - self.time)
-
-        self.line.points = [y, (Window.height*0.8)-50, y, (Window.height*0.8)+50]
-
-        x1 = Window.width * nowbar_w_margin
-        x2 = Window.width * (1- nowbar_w_margin)
-
-        # return if it is visible:
-        return x1 < y < x2
-
-
-# Displays one button on the nowbar
-class ButtonDisplay(InstructionGroup):
-    def __init__(self, lane, color):
-        super(ButtonDisplay, self).__init__()
-        self.lane = lane
-        self.color = Color(*color)
-
-        self.button = Line(width=1)
-
-        self.add(self.color)
-        self.add(self.button)
-
-    # displays when button is pressed down
-    def on_down(self):
-        self.button.width = 10
-
-    # back to normal state
-    def on_up(self):
-        self.button.width = 1
-
-    # modify object positions based on new window size
+        if now_time > (song_time + metro_time) and not self.hit:
+            self.color.hsv = (1,0,1)
+        return now_time > 0 and now_time <= (song_time + metro_time)
+    
     def on_resize(self, win_size):
-        x1 = win_size[0] * (nowbar_w_margin + 0.01)
-        x2 = win_size[0] * (1- nowbar_w_margin - 0.01)
-        dist = (x2 - x1)/7
-        lane_to_pos = {1:x1, 2:x1 + dist, \
-        3:x1 + 2*dist, 4:x1 + 3*dist, 5:x1 + 4*dist, 6:x1 + 5*dist, \
-        7:x1 + 6*dist, 8:x1 + 7*dist}
-        x = lane_to_pos[self.lane]
-        y = time_to_ypos(0)
-        self.button.points = draw_triangle(x,y, win_size[0]/32)
-
-def time_to_ypos(time):
-    y_nowbar = Window.width * nowbar_w_margin
-    m = Window.width / time_span
-    y = m * time + y_nowbar
-    return y
+        self.y = lane_h * Window.height
+        self.x = tick_to_xpos(self.time)
+        size = Window.width * (max_x - min_x) / (song_time + metro_time) * accuracy_window
+        self.gem.cpos = (self.x, self.y)
+        self.gem.csize = (size, size)
 
 # Displays all game elements: nowbar, buttons, downbeats, gems
 class GameDisplay(InstructionGroup):
-    def __init__(self, song_data):
+    def __init__(self, gems):
         super(GameDisplay, self).__init__()
-        self.gem_data = song_data.get_gem_beats()
-        self.downbeat_data = song_data.get_downbeat()
 
-        self.gems = [GemDisplay(*g) for g in self.gem_data]
-        for g in self.gems:
-            self.add(g)
-
-        self.downbeats = [DownbeatDisplay(d) for d in self.downbeat_data]
-        for d in self.downbeats:
-            self.add(d)
-        
-        lane_to_color_dict = {
-            1: (1, 0, 0),    # Red
-            2: (0, 1, 0),    # Green
-            3: (0, 0, 1),    # Blue
-            4: (1, 1, 0),    # Yellow
-            5: (0, 1, 1),    # Cyan
-            6: (1, 0, 1),    # Magenta
-            7: (1, 1, 1),    # White
-            8: (1, 0.647, 0) # Orange
-            }
-
-        self.button_data = [(1, lane_to_color_dict[1]), (2, lane_to_color_dict[2]), \
-        (3, lane_to_color_dict[3]), (4, lane_to_color_dict[4]), (5, lane_to_color_dict[5]), \
-        (6, lane_to_color_dict[6]), (7, lane_to_color_dict[7]), (8, lane_to_color_dict[8])]
-        self.buttons = [ButtonDisplay(*b) for b in self.button_data]
-        for b in self.buttons:
-            self.add(b)
-            b.on_resize(Window.size)
-
-        self.nowbar = Line(width=3) # position of nowbar set in _resize()
-        self.sidebar1 = Line(width=3)
-        self.sidebar2 = Line(width=3)
-        self.add(Color(1,1,1))
-        self.add(self.nowbar)
-        self.add(self.sidebar1)
-        self.add(self.sidebar2)
-        self._resize(Window.size)
-        self.original_color = (0, 0, 0)
+        # self.beat_times = song_data.beats
+        # self.gem_times = song_data.gems
         self.score = 0
+
+        # nowbar
+        self.add(Color(1,1,1))
+        self.nowbar = NowbarDisplay()
+        self.add(self.nowbar)
+
+        # gems
+        self.gems = [GemDisplay(lane, time, (1/8 * (lane),1,1)) for time,lane in gems]
+
+        # buttons
+        self.buttons = [ButtonDisplay(i, (1/8 * i,0.9,0.5)) for i in range(8)]
+        for button in self.buttons:
+            self.add(button)
+
+        self.add(Color(hsv=[1,0,1]))
+        self.listen = CLabelRect((Window.width//2, Window.height//2), "Listen!")
+        self.play = CLabelRect((Window.width//2, Window.height//2), "Play!")
+
+        # downbeats
+        # self.beats = [DownbeatDisplay(time) for time in self.beat_times]
 
     # called by Player when succeeded in hitting this gem.
     def gem_hit(self, gem_idx):
-        gem = self.gems[gem_idx]
-        original_color = gem.color.rgb
-        # gem shows it was hit by turning big and green
-        gem.on_hit()
-        for g in self.gems:
-            if g.lane == gem.lane:
-                g.color.rgb = (0,1,0)
-                g.gem.width = 10
-        Clock.schedule_once(lambda dt: self.reset_gem_colors(gem.lane, original_color), 0.5)
+        self.gems[gem_idx].on_hit()
 
-    def reset_gem_colors(self, lane, original_color):
-        for g in self.gems:
-            if g.lane == lane:
-                g.color.rgb = original_color  # Reset to original color
-                g.gem.width = 1
-    
     # called by Player on pass or miss.
     def gem_pass(self, gem_idx):
-        gem = self.gems[gem_idx]
-        gem.on_pass()
-        # gem.color.rgb = (0.5, 0.5, 0.5)
+        self.gems[gem_idx].on_pass()
 
     # called by Player on button down
     def on_button_down(self, lane):
-        for button in self.buttons:
-            if button.lane == lane:
-                button.on_down()
+        self.buttons[lane].on_down()
 
     # called by Player on button up
     def on_button_up(self, lane):
-        for button in self.buttons:
-            if button.lane == lane:
-                button.on_up()
+        self.buttons[lane].on_up()
 
     # called by Player to update score
     def set_score(self, score):
         self.score = score
 
+    def listen_command(self):
+        self.add(self.listen)
+
+    def play_command(self):
+        self.remove(self.listen)
+        self.add(self.play)
+
+    def remove_play_command(self):
+        self.remove(self.play)
+
     # for when the window size changes
     def on_resize(self, win_size):
-        self._resize(win_size)
-        for b in self.buttons:
-            b.on_resize(win_size)
+        for g in self.gems:
+            g.on_resize(win_size)
+        for button in self.buttons:
+            button.on_resize(win_size)
+        # self.nowbar.points=(nowbar_w_margin * Window.width, nowbar_h * Window.height, (1 - nowbar_w_margin) * Window.width, nowbar_h * Window.height)
 
-    def _resize(self, win_size):
-        # resize the nowbar
-        x1 = win_size[0] * nowbar_w_margin
-        x2 = win_size[0] * (1- nowbar_w_margin)
-        y = time_to_ypos(0)
-        self.nowbar.points = [x1, win_size[1]*0.8, x2, win_size[1]*0.8]
-        self.sidebar1.points = [x1, (win_size[1]*0.8)+50, x1, (win_size[1]*0.8)-50]
-        self.sidebar2.points = [x2, (win_size[1]*0.8)+50, x2, (win_size[1]*0.8)-50]
+
+    # call every frame to handle animation needs
+    def on_update(self, now_tick):
+        vis = self.nowbar.on_update(now_tick)
+        if vis and self.nowbar not in self.children:
+            self.add(self.nowbar)
+        elif not vis and self.nowbar in self.children:
+            self.remove(self.nowbar)
+
+        # for b in self.beats:
+        #     vis = b.on_update(now_time)
+
+        #     # TODO write optimization code here
+        #     if vis and b not in self.children:
+        #         self.add(b)
+        #     if not vis and b in self.children:
+        #         self.remove(b)
+
+        for g in self.gems:
+            vis = g.on_update(now_tick)
+
+            # TODO write optimization code here
+            if vis and g not in self.children:
+                self.add(g)
+            if not vis and g in self.children:
+                self.remove(g)
+
+            # if g not in self.children:
+            #     print(vis, g.time - now_time)
+
+        pass
 
     def get_num_object(self):
         return len(self.children)
 
-    # call every frame to handle animation needs
-    def on_update(self, now_time):
-        for g in self.gems:
-            vis = g.on_update(now_time)
-            in_list = g in self.children
-            if vis and not in_list: 
-                self.add(g)
-            if not vis and in_list:
-                self.remove(g)
-            # if vis:
-            #     g.color.a = g.color_anim.eval(now_time)
-        
-        for d in self.downbeats:
-            vis = d.on_update(now_time)
-            in_list = d in self.children
-            if vis and not in_list:
-                self.add(d)
-            if not vis and in_list:
-                self.remove(d)
-
-
-# Handles game logic and keeps track of score.
-# Controls the GameDisplay and AudioCtrl based on what happens
 class Player(object):
-    def __init__(self, song_data, audio_ctrl, display):
+    def __init__(self, gems, audio_ctrl, display):
         super(Player, self).__init__()
-        self.song_data = song_data
-        self.audio_ctrl = audio_ctrl
-        self.display = display
-        self.gems = self.display.gems
 
-        self.slop_window = 100  # +/- 100 ms
-        self.hit = False
-        self.lane_miss = False
-        self.temporal_miss = False
+        self.gems = gems
+        print(gems)
+        self.idx = 0
+        # self.lanes = {}
+
+        self.display = display
+        self.audio_ctrl = audio_ctrl
+        self.tick = 0
+        self.done = False
+
         self.score = 0
+
+        self.listening = False
+        self.playing = False
 
     # called by MainWidget
     def on_button_down(self, lane):
-        now = self.audio_ctrl.get_time()
+        # self.lanes.add(lane)
         self.display.on_button_down(lane)
-        current_time = now * 1000  # Convert to milliseconds
+        self.audio_ctrl.synth.noteon(2, lanes[lane], 100)
+        if self.done or not self.audio_ctrl.player:
+            return
         
-        for g in range(len(self.gems)):
-            gem = self.gems[g]
-            gem_time = gem.time * 1000  # gem.time is in seconds
-            if gem_time - self.slop_window <= current_time <= gem_time + self.slop_window:
-                if gem.lane == lane and gem.hit == False:
-                    self.hit = True
-                    self.display.gem_hit(g)
-                    self.audio_ctrl.set_mute(False) # solo track unmutes
-                    self.score += 1
-                    self.display.set_score(self.score)
-                else:
-                    self.lane_miss = True  # Lane miss detected
-                    self.display.gem_pass(g)
-                    self.audio_ctrl.set_mute(True) # solo track mutes
-                    self.audio_ctrl.play_miss()
 
-        # Update the display based on the results
-        if not self.hit and not self.lane_miss:
-            self.temporal_miss = True
-            self.audio_ctrl.set_mute(True) # solo track unmutes
-            self.audio_ctrl.play_miss()
+        target_time = self.gems[self.idx][0]
+        target_lane = self.gems[self.idx][1]
+        print(lane, target_lane)
+        print(self.tick, target_time)
+        if target_time - accuracy_window < self.tick:
+            if lane == target_lane:
+                self.display.gem_hit(self.idx)
+                self.score += 1
+                # self.display.set_score(self.score)
+            # else: # not necessary for us, i think
+                # self.audio_ctrl.play_miss()
+                # self.audio_ctrl.set_mute(True)
+                # self.display.gem_pass(self.idx)
+            # only do this if gem hits. we probably want some other way of disincentivizing unnecessary wrong notes
+                if self.idx < len(self.gems) - 1:
+                    self.idx += 1
+                else:
+                    self.done = True
+                    self.idx = 0
+                # return # do you return? maybe you just want them to play it? maybe you want a noteseq to play it right?
+        # else: 
+            # self.audio_ctrl.play_miss()
+            # self.audio_ctrl.set_mute(True)
+            # pass
 
     # called by MainWidget
     def on_button_up(self, lane):
+        # self.lanes.remove(lane)
         self.display.on_button_up(lane)
+        self.audio_ctrl.synth.noteoff(2, lanes[lane])
 
     # needed to check for pass gems (ie, went past the slop window)
-    def on_update(self, time):
-        self.audio_ctrl.on_update()
-        now = self.audio_ctrl.get_time()
-        self.display.on_update(now)
-        
-        current_time = time * 1000  # Convert to milliseconds
-        # Check for gems that have passed the NowBar and are no longer hittable
-        for g in range(len(self.gems)):
-            gem = self.gems[g]
-            gem_time = gem.time * 1000  # Convert gem time to milliseconds
-            if (current_time > gem_time + self.slop_window) and gem.on_screen and not gem.hit: # check gem.on_screen and gem.hit
-                self.display.gem_pass(g)
-                self.audio_ctrl.set_mute(True)
+    def on_update(self, tick):
+        if not self.listening and not self.playing and self.audio_ctrl.training:
+            self.listening = True
+            self.display.listen_command()
 
+        if not self.playing and self.audio_ctrl.player:
+            self.playing = True
+            self.listening = False
+            self.display.play_command()
+
+        if self.playing and not self.audio_ctrl.training:
+            self.playing = False
+            self.display.remove_play_command()
+
+        self.tick = tick
+        if self.done or not self.audio_ctrl.player:
+            return
+
+        if self.gems[self.idx][0] + accuracy_window < tick:
+            self.display.gem_pass(self.idx)
+            # self.audio_ctrl.set_mute(True)
+            if self.idx < len(self.gems) - 1:
+                self.idx += 1
+            else:
+                self.done = True
+                self.idx = 0
 
 if __name__ == "__main__":
     run(MainWidget())
-
-# fix resize of letters
-# fix bar to be within right frame
