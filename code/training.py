@@ -11,7 +11,7 @@ from imslib.synth import Synth
 from imslib.clock import SimpleTempoMap, AudioScheduler, kTicksPerQuarter, quantize_tick_up
 from imslib.gfxutil import topleft_label, CEllipse, CRectangle, CLabelRect
 from functools import reduce
-from AttackDisplay import AttackDisplay
+from AttackDisplay import AttackDisplay, box_select
 y_margin = 0.3 #distance from bottom of boxes to edge of screen
 
 from kivy.graphics.instructions import InstructionGroup
@@ -33,7 +33,7 @@ accuracy_window = 100 # num seconds window
 button_width = 0.9 # fraction of the space betw lines
 nowbar_h = 0.1
 
-# song data: make into a class?
+# song data for winter, will eventually come from the song database
 winter_metro_time = 480 * 4
 winter_notes = ((240, 60), (240, 72), (240, 67), (240, 63), 
           (240, 60), (240, 72), (240, 67), (240, 63), (240, 60),)
@@ -62,55 +62,78 @@ class TrainingWidget(BaseWidget):
         self.audio.set_generator(self.sched)
         self.sched.set_generator(self.synth)
 
-        ### each ATTACK gets an AUDIO CONTROL, GAME DISPLAY, and PLAYER
-        # audio control
-        self.audio_ctrl = AudioController(self.synth, self.sched, winter_attack)
-        # game display
-        self.game_display = GameDisplay(winter_attack)
-        self.canvas.add(self.game_display)
-        # player needs the above
-        self.player = Player(winter_attack, self.audio_ctrl, self.game_display)
+        # change this to make the attacks not all just winter haha
+        self.attacks = [{"name":f"winter{i}","attack_obj":winter_attack} for i in range(4)]
+
+        ### each ATTACK gets an AUDIO CONTROL, GAME DISPLAY, PLAYER, and ATTACK DISPLAY
+        for attack_ind in range(len(self.attacks)):
+            # audio control
+            self.attacks[attack_ind]["audio_ctrl"] = AudioController(self.synth, self.sched, self.attacks[attack_ind]["attack_obj"])
+            # game display
+            self.attacks[attack_ind]["game_display"] = GameDisplay(self.attacks[attack_ind]["attack_obj"])
+            # self.canvas.add(self.attacks[attack]["game_display"])
+            # player needs the above
+            self.attacks[attack_ind]["player"] = Player(self.attacks[attack_ind]["attack_obj"], self.attacks[attack_ind]["audio_ctrl"], self.attacks[attack_ind]["game_display"])
+            self.attacks[attack_ind]["attack_display"] = AttackDisplay(attack_ind, self.attacks[attack_ind]["name"], 0, True, y_marg=y_margin)
+            self.canvas.add(self.attacks[attack_ind]["attack_display"])
+        
+        self.curr_attack_index = 0  # attack that is currently selected
+        self.attacks[self.curr_attack_index]["attack_display"].select() # display attack as selected in the selector
+        self.canvas.add(self.attacks[self.curr_attack_index]["game_display"]) # display current attack
+        self.training = False
 
         self.info = topleft_label()
         self.add_widget(self.info)
 
     def on_key_down(self, keycode, modifiers):
-        # play / pause toggle
-        if keycode[1] == 'p':
-            if not self.audio_ctrl.training:
-                self.audio_ctrl.play()
-                self.player.done = False
+        # only change selected attack if not actively training
+        if not self.training and keycode[1] in ('right', 'left', 'up', 'down'):
+            new_ind = box_select(keycode[1], self.curr_attack_index)
+            if new_ind != self.curr_attack_index:
+                self.attacks[self.curr_attack_index]["attack_display"].unselect()
+                self.canvas.remove(self.attacks[self.curr_attack_index]["game_display"])
+                self.curr_attack_index = new_ind
+                self.canvas.add(self.attacks[self.curr_attack_index]["game_display"])
+                self.attacks[self.curr_attack_index]["attack_display"].select()
 
-        # button down
+        # train the selected attack
+        if keycode[1] == "enter" and not self.training:
+            self.attacks[self.curr_attack_index]["audio_ctrl"].play()
+            self.attacks[self.curr_attack_index]["player"].done = False
+
+        # play a note 
         button_idx = lookup(keycode[1], btns, (0,1,2,3,4,5,6,7))
         if button_idx != None:
             # print('down', button_idx)
-            self.player.on_button_down(button_idx)
+            self.attacks[self.curr_attack_index]["player"].on_button_down(button_idx)
 
     def on_key_up(self, keycode):
         # button up
         button_idx = lookup(keycode[1], btns, (0,1,2,3,4,5,6,7))
         if button_idx != None:
             # print('up', button_idx)
-            self.player.on_button_up(button_idx)
+            self.attacks[self.curr_attack_index]["player"].on_button_up(button_idx)
 
     # handle changing displayed elements when window size changes
     # This function should call GameDisplay.on_resize
     def on_resize(self, win_size):
-        self.game_display.on_resize(win_size)
+        for attack in self.attacks:
+            attack["game_display"].on_resize(win_size)
 
     def on_update(self):
         self.audio.on_update() # used to be # self.audio_ctrl.on_update()
         # everyone uses audio's time now, which is in ticks instead of seconds
-        now = self.audio_ctrl.get_tick()
-        self.game_display.on_update(now)
-        self.player.on_update(now)
+        now = self.attacks[self.curr_attack_index]["audio_ctrl"].get_tick()
+        self.attacks[self.curr_attack_index]["game_display"].on_update(now)
+        self.attacks[self.curr_attack_index]["player"].on_update(now)
+        self.training = reduce(lambda tot,att: tot or att["audio_ctrl"].training, self.attacks, False)
 
         self.info.text = 'p: pause/unpause song\n'
         self.info.text += f'song time: {now:.2f}\n'
-        self.info.text += f'num objects: {self.game_display.get_num_object()}\n'
-        self.info.text += f'accuracy of run: {self.game_display.acc}\n'
-        self.info.text += f'training percent: {self.game_display.get_training_percent():.2f}'
+        self.info.text += f'index {self.curr_attack_index}\n'
+        self.info.text += f'num objects: {self.attacks[self.curr_attack_index]["game_display"].get_num_object()}\n'
+        self.info.text += f'accuracy of run: {self.attacks[self.curr_attack_index]["game_display"].acc}\n'
+        self.info.text += f'training percent: {self.attacks[self.curr_attack_index]["game_display"].get_training_percent():.2f}'
 
 class AudioController(object):
     def __init__(self, synth, sched, attack):

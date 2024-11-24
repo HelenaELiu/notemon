@@ -21,12 +21,13 @@ y_spacing = 1/20 # y-space between boxes
 
 # Display for a single attack box
 class AttackDisplay(InstructionGroup):
-    def __init__(self, index, name, damage, show):
+    def __init__(self, index, name, damage, show, y_marg=y_margin):
         super(AttackDisplay, self).__init__()
         self.index = index
         self.name = name
         self.damage = damage
         self.show = show
+        self.y_margin = y_marg
 
         #opponents attacks are not shown, only ours are
         if show:
@@ -40,10 +41,10 @@ class AttackDisplay(InstructionGroup):
             h = box_height * Window.height
 
             x1 = x_margin * Window.width
-            y1 = y_margin * Window.height + y_spacing * Window.height + h
+            y1 = self.y_margin * Window.height + y_spacing * Window.height + h
 
             x2 = (1 - x_margin) * Window.width - w
-            y2 = y_margin * Window.height
+            y2 = self.y_margin * Window.height
 
             if index == 0:
                 self.box = Line(rectangle = (x1, y1, w, h), width = 3)
@@ -72,3 +73,23 @@ class AttackDisplay(InstructionGroup):
         if self.show:
             self.color.a = 0.7
             self.box.width = 3
+
+
+def box_select(dir, curr_ind):
+    if dir == "up":
+        if curr_ind == 2 or curr_ind == 3:
+            return curr_ind - 2
+    
+    elif dir == "down":
+        if curr_ind == 0 or curr_ind == 1:
+            return curr_ind + 2
+    
+    elif dir == "left":
+        if curr_ind == 1 or curr_ind == 3:
+            return curr_ind - 1
+    
+    elif dir == "right":
+        if curr_ind == 0 or curr_ind == 2:
+            return curr_ind + 1
+
+    return curr_ind
