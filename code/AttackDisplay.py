@@ -17,7 +17,7 @@ x_margin = 1/10 #distance from sides of boxes to edge of screen
 y_margin = 1/20 #distance from bottom of boxes to edge of screen
 box_width = 7/20 #width of boxes
 box_height = 1/6 #height of boxes
-
+y_spacing = 1/20 # y-space between boxes 
 
 # Display for a single attack box
 class AttackDisplay(InstructionGroup):
@@ -40,10 +40,10 @@ class AttackDisplay(InstructionGroup):
             h = box_height * Window.height
 
             x1 = x_margin * Window.width
-            y1 = 2 * y_margin * Window.width + h
+            y1 = y_margin * Window.height + y_spacing * Window.height + h
 
-            y2 = y_margin * Window.width
             x2 = (1 - x_margin) * Window.width - w
+            y2 = y_margin * Window.height
 
             if index == 0:
                 self.box = Line(rectangle = (x1, y1, w, h), width = 3)
