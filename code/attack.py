@@ -2,7 +2,8 @@ from functools import reduce
 
 # Attack wrapper
 class Attack:
-    def __init__(self, notes, metro_time, scale, metro=[(480, 60)], unlocked=False):
+    def __init__(self, name, notes, metro_time, scale, metro=[(480, 60)], unlocked=False):
+        self.name = name
         self.notes = notes
         self.metro_time = metro_time
         self.lanes = scale # what note each button corresponds to

@@ -31,38 +31,12 @@ y_margin = 0.3 #distance from bottom of boxes to edge of screen
 # metro = ((480, 60),)
 
 
-# winter_attack = Attack(winter_notes, winter_metro_time, winter_lanes)
-
-attack_names = ["winter", "fifth", "fur", "magic"]
-
-attack_notes = [((240, 60), (240, 72), (240, 67), (240, 63), 
-                    (240, 60), (240, 72), (240, 67), (240, 63), (240, 60),),
-                ((240, 67), (240, 67), (240, 67), (240 * 5, 63), 
-                    (240, 65), (240, 65), (240, 65), (240 * 5, 62),),
-                ((240, 76), (240, 75), (240, 76), (240, 75), 
-                    (240, 76), (240, 71), (240, 74), (240, 72), (240 * 2, 69),),
-                ((120, 69), (120, 67), (120, 69), (120, 70), 
-                    (240, 72), (240, 72), (240, 72), (240, 72), 
-                    (240, 72), (240, 72), (240, 72), (240, 72), (240 * 4, 65),)]
-
-attack_lanes = [(60, 62, 63, 65, 67, 69, 71, 72), 
-                (60, 62, 63, 65, 67, 69, 71, 72),
-                (69, 71, 72, 74, 75, 76, 77, 79),
-                (60, 62, 63, 65, 67, 69, 70, 72)]
-
-# song data for winter, will eventually come from the song database
-metro_time = 480 * 4
-# lanes = (60, 62, 63, 65, 67, 69, 71, 72) # can change; should change for every song?
-# fur_elise_lanes = (69, 71, 72, 74, 75, 76, 77, 79)
-# magic_flute_lanes = (60, 62, 63, 65, 67, 69, 70, 72)
-
-attack_objects = [Attack(attack_notes[i], metro_time, attack_lanes[i]) for i in range(len(attack_names))]
 
 # array
 # names, notes, lanes
 
 class TrainingWidget(BaseWidget):
-    def __init__(self):
+    def __init__(self, attack_objects):
         super(TrainingWidget, self).__init__()
         # audio
         self.audio = Audio(2)
@@ -75,7 +49,7 @@ class TrainingWidget(BaseWidget):
         self.sched.set_generator(self.synth)
 
         # change this to make the attacks not all just winter haha
-        self.attacks = [{"name":attack_names[i],"attack_obj":attack_objects[i]} for i in range(4)]
+        self.attacks = [{"name":attack_objects[i].name,"attack_obj":attack_objects[i]} for i in range(4)]
 
         ### each ATTACK gets an AUDIO CONTROL, GAME DISPLAY, PLAYER, and ATTACK DISPLAY
         for attack_ind in range(len(self.attacks)):

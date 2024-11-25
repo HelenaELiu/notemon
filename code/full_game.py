@@ -19,12 +19,36 @@ from kivy import metrics
 
 from training import TrainingWidget
 from battle import MainWidget
+from attack import Attack
 
 # metrics allows kivy to create screen-density-indeptrainingent sizes.
 # Here, 20 dp will always be the same physical size on screen regardless of resolution or OS.
 # Another option is to use metrics.pt or metrics.sp. See https://kivy.org/doc/stable/api-kivy.metrics.html
 font_sz = metrics.dp(20)
 button_sz = metrics.dp(100)
+
+# Attack globals
+attack_names = ["winter", "fifth", "fur", "magic"]
+
+attack_notes = [((240, 60), (240, 72), (240, 67), (240, 63), 
+                    (240, 60), (240, 72), (240, 67), (240, 63), (240, 60),),
+                ((240, 67), (240, 67), (240, 67), (240 * 5, 63), 
+                    (240, 65), (240, 65), (240, 65), (240 * 5, 62),),
+                ((240, 76), (240, 75), (240, 76), (240, 75), 
+                    (240, 76), (240, 71), (240, 74), (240, 72), (240 * 2, 69),),
+                ((120, 69), (120, 67), (120, 69), (120, 70), 
+                    (240, 72), (240, 72), (240, 72), (240, 72), 
+                    (240, 72), (240, 72), (240, 72), (240, 72), (240 * 4, 65),)]
+
+attack_lanes = [(60, 62, 63, 65, 67, 69, 71, 72), 
+                (60, 62, 63, 65, 67, 69, 71, 72),
+                (69, 71, 72, 74, 75, 76, 77, 79),
+                (60, 62, 63, 65, 67, 69, 70, 72)]
+
+metro_time = 480 * 4
+unlocked = [True, False, False, False]
+
+attack_objects = [Attack(attack_names[i], attack_notes[i], metro_time, attack_lanes[i], unlocked=unlocked[i]) for i in range(len(attack_names))]
 
 # IntroScreen is just like a MainWidget, but it derives from Screen instead of BaseWidget.
 # This allows it to work with the ScreenManager system.
@@ -107,11 +131,11 @@ class MainScreen(Screen):
         self.info.text += "-: switch to battle\n"
 
 class trainingScreen(Screen):
-    def __init__(self, **kwargs):
+    def __init__(self, globals, **kwargs):
         super(trainingScreen, self).__init__(**kwargs)
         
         # Create an instance of TrainingWidget
-        self.training_widget = TrainingWidget()
+        self.training_widget = TrainingWidget(globals.attack_objects)
         
         # Add the TrainingWidget to the screen
         self.add_widget(self.training_widget)
@@ -136,11 +160,11 @@ class trainingScreen(Screen):
             self.training_widget.on_update()
 
 class battleScreen(Screen):
-    def __init__(self, **kwargs):
+    def __init__(self, globals, **kwargs):
         super(battleScreen, self).__init__(**kwargs)
 
         # Create an instance of MainWidget (battle)
-        self.battle_widget = MainWidget()
+        self.battle_widget = MainWidget(globals.attack_objects)
 
         # Add the MainWidget (battle) to the screen
         self.add_widget(self.battle_widget)
@@ -169,9 +193,11 @@ class battleScreen(Screen):
 # optional globals object for data to be shared amongst all screens
 class Globals():
     def __init__(self):
+        global attack_objects
         # example of total score
         self.total_score = 0
 
+        self.attack_objects = attack_objects
         # could also create self.audio = Audio(2) here if needed
         # (there should only ever be one Audio instance)
 
@@ -185,7 +211,7 @@ sm = ScreenManager(globals=Globals())
 # like a shared data class or they can even know directly about each other as needed.
 sm.add_screen(IntroScreen(name='intro'))
 sm.add_screen(MainScreen(name='main'))
-sm.add_screen(trainingScreen(name='training'))
-sm.add_screen(battleScreen(name='battle'))
+sm.add_screen(trainingScreen(sm.globals, name='training'))
+sm.add_screen(battleScreen(sm.globals, name='battle'))
 
 run(sm)

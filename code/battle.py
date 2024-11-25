@@ -53,12 +53,12 @@ OPP_NOTE_TIME = 8
 INTERVAL = 2 # Third
 
 class MainWidget(BaseWidget):
-    def __init__(self):
+    def __init__(self, attack_objects):
         super(MainWidget, self).__init__()
-        self.display = GameDisplay()
+        self.display = GameDisplay(unlocked=[a.unlocked for a in attack_objects])
         self.canvas.add(self.display)
 
-        self.audio_ctrl = AudioController()
+        self.audio_ctrl = AudioController(attack_objects)
         self.player = Player(self.audio_ctrl, self.display, 58)
         self.opp = Opponent(.3, self.audio_ctrl)
         self.player.set_opponent(self.opp)
@@ -166,7 +166,7 @@ fur_elise_lanes = (69, 71, 72, 74, 75, 76, 77, 79)
 magic_flute_lanes = (60, 62, 63, 65, 67, 69, 70, 72)
 
 class AudioController(object):
-    def __init__(self):
+    def __init__(self, attacks):
         super(AudioController, self).__init__()
         self.audio = Audio(2)
         self.synth = Synth()
@@ -182,7 +182,7 @@ class AudioController(object):
         #create song
         self.seqs = []
 
-        self.attacks = [Attack(winter, metro_time, lanes), Attack(fifth_symphony, metro_time, lanes), Attack(fur_elise, metro_time, fur_elise_lanes), Attack(magic_flute, metro_time, magic_flute_lanes)]
+        self.attacks = attacks
 
         self.next_note_cmd = None
         self.defense_note = None
@@ -203,25 +203,25 @@ class AudioController(object):
 
 # Displays all game elements: attack boxes, notemon sprites
 class GameDisplay(InstructionGroup):
-    def __init__(self):
+    def __init__(self, unlocked=[True, False, False, False]):
         super(GameDisplay, self).__init__()
 
         #attack boxes
         self.boxes = []
 
-        self.box0 = AttackDisplay(0, "Winter", 10, True)
+        self.box0 = AttackDisplay(0, "Winter", 10, unlocked[0])
         self.boxes.append(self.box0)
         self.add(self.box0)
 
-        self.box1 = AttackDisplay(1, "5th Symphony", 40, True)
+        self.box1 = AttackDisplay(1, "5th Symphony", 40, unlocked[1])
         self.boxes.append(self.box1)
         self.add(self.box1)
 
-        self.box2 = AttackDisplay(2, "Fur Elise", 20, True)
+        self.box2 = AttackDisplay(2, "Fur Elise", 20, unlocked[2])
         self.boxes.append(self.box2)
         self.add(self.box2)
 
-        self.box3 = AttackDisplay(3, "Magic Flute", 30, True)
+        self.box3 = AttackDisplay(3, "Magic Flute", 30, unlocked[3])
         self.boxes.append(self.box3)
         self.add(self.box3)
 
@@ -248,27 +248,31 @@ class GameDisplay(InstructionGroup):
     
     def on_button_up(self):
         if self.current_box == 2 or self.current_box == 3:
-            self.boxes[self.current_box].unselect()
-            self.current_box -= 2
-            self.boxes[self.current_box].select()
+            if self.boxes[self.current_box - 2].show:
+                self.boxes[self.current_box].unselect()
+                self.current_box -= 2
+                self.boxes[self.current_box].select()
     
     def on_button_down(self):
         if self.current_box == 0 or self.current_box == 1:
-            self.boxes[self.current_box].unselect()
-            self.current_box += 2
-            self.boxes[self.current_box].select()
+            if self.boxes[self.current_box + 2].show:
+                self.boxes[self.current_box].unselect()
+                self.current_box += 2
+                self.boxes[self.current_box].select()
     
     def on_button_left(self):
         if self.current_box == 1 or self.current_box == 3:
-            self.boxes[self.current_box].unselect()
-            self.current_box -= 1
-            self.boxes[self.current_box].select()
+            if self.boxes[self.current_box - 1].show:
+                self.boxes[self.current_box].unselect()
+                self.current_box -= 1
+                self.boxes[self.current_box].select()
     
     def on_button_right(self):
         if self.current_box == 0 or self.current_box == 2:
-            self.boxes[self.current_box].unselect()
-            self.current_box += 1
-            self.boxes[self.current_box].select()
+            if self.boxes[self.current_box + 1].show:
+                self.boxes[self.current_box].unselect()
+                self.current_box += 1
+                self.boxes[self.current_box].select()
     
     def attack_opponent(self, index):
         damage = self.boxes[index].damage
@@ -481,4 +485,4 @@ class Opponent():
 
 
 if __name__ == "__main__":
-    run(MainWidget())
+    run(MainWidget([True, False, False, False]))
