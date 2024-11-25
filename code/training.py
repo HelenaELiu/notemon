@@ -23,14 +23,43 @@ from training_display_components import GemDisplay, ButtonDisplay, NowbarDisplay
 y_margin = 0.3 #distance from bottom of boxes to edge of screen
 
 # song data for winter, will eventually come from the song database
-winter_metro_time = 480 * 4
-winter_notes = ((240, 60), (240, 72), (240, 67), (240, 63), 
-          (240, 60), (240, 72), (240, 67), (240, 63), (240, 60),)
-# song_time = reduce(lambda a,x: a+x[0], winter, 0)
-winter_lanes = (60, 62, 63, 65, 67, 69, 71, 72) # can change; should change for every song?
+# winter_metro_time = 480 * 4
+# winter_notes = ((240, 60), (240, 72), (240, 67), (240, 63), 
+#           (240, 60), (240, 72), (240, 67), (240, 63), (240, 60),)
+# # song_time = reduce(lambda a,x: a+x[0], winter, 0)
+# winter_lanes = (60, 62, 63, 65, 67, 69, 71, 72) # can change; should change for every song?
 # metro = ((480, 60),)
 
-winter_attack = Attack(winter_notes, winter_metro_time, winter_lanes)
+
+# winter_attack = Attack(winter_notes, winter_metro_time, winter_lanes)
+
+attack_names = ["winter", "fifth", "fur", "magic"]
+
+attack_notes = [((240, 60), (240, 72), (240, 67), (240, 63), 
+                    (240, 60), (240, 72), (240, 67), (240, 63), (240, 60),),
+                ((240, 67), (240, 67), (240, 67), (240 * 5, 63), 
+                    (240, 65), (240, 65), (240, 65), (240 * 5, 62),),
+                ((240, 76), (240, 75), (240, 76), (240, 75), 
+                    (240, 76), (240, 71), (240, 74), (240, 72), (240 * 2, 69),),
+                ((120, 69), (120, 67), (120, 69), (120, 70), 
+                    (240, 72), (240, 72), (240, 72), (240, 72), 
+                    (240, 72), (240, 72), (240, 72), (240, 72), (240 * 4, 65),)]
+
+attack_lanes = [(60, 62, 63, 65, 67, 69, 71, 72), 
+                (60, 62, 63, 65, 67, 69, 71, 72),
+                (69, 71, 72, 74, 75, 76, 77, 79),
+                (60, 62, 63, 65, 67, 69, 70, 72)]
+
+# song data for winter, will eventually come from the song database
+# metro_time = 480 * 4
+# lanes = (60, 62, 63, 65, 67, 69, 71, 72) # can change; should change for every song?
+# fur_elise_lanes = (69, 71, 72, 74, 75, 76, 77, 79)
+# magic_flute_lanes = (60, 62, 63, 65, 67, 69, 70, 72)
+
+attack_objects = [Attack(attack_notes[i], metro_time, attack_lanes[i]) for i in range(len(attack_names))]
+
+# array
+# names, notes, lanes
 
 class TrainingWidget(BaseWidget):
     def __init__(self):
@@ -48,7 +77,7 @@ class TrainingWidget(BaseWidget):
         self.sched.set_generator(self.synth)
 
         # change this to make the attacks not all just winter haha
-        self.attacks = [{"name":f"winter{i}","attack_obj":winter_attack} for i in range(4)]
+        self.attacks = [{"name":attack_names[i],"attack_obj":attack_objects[i]} for i in range(4)]
 
         ### each ATTACK gets an AUDIO CONTROL, GAME DISPLAY, PLAYER, and ATTACK DISPLAY
         for attack_ind in range(len(self.attacks)):
@@ -66,11 +95,13 @@ class TrainingWidget(BaseWidget):
         self.attacks[self.curr_attack_index]["attack_display"].select() # display attack as selected in the selector
         self.canvas.add(self.attacks[self.curr_attack_index]["game_display"]) # display current attack
         self.training = False
+        self.attacks_trained = 0 # keep track of how many attacks trained
 
         self.info = topleft_label()
         self.add_widget(self.info)
 
     def on_key_down(self, keycode, modifiers):
+
         # only change selected attack if not actively training
         if not self.training and keycode[1] in ('right', 'left', 'up', 'down'):
             new_ind = box_select(keycode[1], self.curr_attack_index)
@@ -82,7 +113,7 @@ class TrainingWidget(BaseWidget):
                 self.attacks[self.curr_attack_index]["attack_display"].select()
 
         # train the selected attack
-        if keycode[1] == "enter" and not self.training:
+        if keycode[1] == "spacebar" and not self.training:
             self.attacks[self.curr_attack_index]["audio_ctrl"].play()
             self.attacks[self.curr_attack_index]["player"].done = False
 
@@ -99,6 +130,16 @@ class TrainingWidget(BaseWidget):
             # print('up', button_idx)
             self.attacks[self.curr_attack_index]["player"].on_button_up(button_idx)
 
+    def scoring(self):
+        # Get the training accuracy percentage
+        training_percent = self.attacks[self.curr_attack_index]["game_display"].get_training_percent()
+
+        # Check if the training is mastered
+        if training_percent > 0.5 and not self.attacks[self.curr_attack_index]['attack_obj'].unlocked:
+            self.attacks_trained += 1
+            self.attacks[self.curr_attack_index]['attack_obj'].unlocked = True
+            return
+
     # handle changing displayed elements when window size changes
     # This function should call GameDisplay.on_resize
     def on_resize(self, win_size):
@@ -111,11 +152,15 @@ class TrainingWidget(BaseWidget):
         now = self.attacks[self.curr_attack_index]["audio_ctrl"].get_tick()
         self.attacks[self.curr_attack_index]["game_display"].on_update(now)
         self.attacks[self.curr_attack_index]["player"].on_update(now)
+        
+        self.scoring()
+
         self.training = reduce(lambda tot,att: tot or att["audio_ctrl"].training, self.attacks, False)
 
         self.info.text = 'p: pause/unpause song\n'
         self.info.text += f'song time: {now:.2f}\n'
         self.info.text += f'index {self.curr_attack_index}\n'
+        self.info.text += f'attacks trained: {self.attacks_trained}\n'
         self.info.text += f'num objects: {self.attacks[self.curr_attack_index]["game_display"].get_num_object()}\n'
         self.info.text += f'accuracy of run: {self.attacks[self.curr_attack_index]["game_display"].acc}\n'
         self.info.text += f'training percent: {self.attacks[self.curr_attack_index]["game_display"].get_training_percent():.2f}'

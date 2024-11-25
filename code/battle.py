@@ -159,6 +159,12 @@ magic_flute = ((120, 69), (120, 67), (120, 69), (120, 70),
                (240, 72), (240, 72), (240, 72), (240, 72), 
                (240, 72), (240, 72), (240, 72), (240, 72), (240 * 4, 65),)
 
+# song data for winter, will eventually come from the song database
+metro_time = 480 * 4
+lanes = (60, 62, 63, 65, 67, 69, 71, 72) # can change; should change for every song?
+fur_elise_lanes = (69, 71, 72, 74, 75, 76, 77, 79)
+magic_flute_lanes = (60, 62, 63, 65, 67, 69, 70, 72)
+
 class AudioController(object):
     def __init__(self):
         super(AudioController, self).__init__()
@@ -176,7 +182,7 @@ class AudioController(object):
         #create song
         self.seqs = []
 
-        self.attacks = [Attack(winter), Attack(fifth_symphony), Attack(fur_elise), Attack(magic_flute)]
+        self.attacks = [Attack(winter, metro_time, lanes), Attack(fifth_symphony, metro_time, lanes), Attack(fur_elise, metro_time, fur_elise_lanes), Attack(magic_flute, metro_time, magic_flute_lanes)]
 
         self.next_note_cmd = None
         self.defense_note = None

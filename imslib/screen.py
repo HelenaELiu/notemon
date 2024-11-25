@@ -12,6 +12,9 @@ from kivy.uix.widget import Widget
 
 
 class Screen(Widget):
+    """
+    :param globals: reference to the single globals objects set in the :class:`ScreenManager` constructor.
+    """
     def __init__(self, name, always_update = False, **kwargs):
         """A screen object, similar to BaseWidget, but intended to be used with ScreenManager
         for managing an app with multiple screens.
@@ -23,7 +26,10 @@ class Screen(Widget):
         super(Screen, self).__init__(**kwargs)
         self.name = name
         self.always_update = always_update
+
+        # these variables get set when this screen is added to the screen manager.
         self.manager = None
+        self.globals = None
 
     def switch_to(self, screen_name):
         """Switches to from the current screen to a different screen.
@@ -77,14 +83,19 @@ class Screen(Widget):
 
 
 class ScreenManager(BaseWidget):
-    def __init__(self):
-        """Derives from BaseWidget. Use this as the MainWidget to manage multiple Screens.
+    def __init__(self, globals = None):
+        """
+        Derives from BaseWidget. Use this as the MainWidget to manage multiple Screens.
         Call :meth:`add_screen` with all Screen subclasses. Only one Screen can be active.
-        A Screen is made active by calling :meth:`switch_to`."""
+        A Screen is made active by calling :meth:`switch_to`.
+
+        :param globals: if set, this object will be made available to all screens as ``self.globals``.
+        """
         super(ScreenManager, self).__init__()
 
         self.screens = []
         self.cur_screen = None
+        self.globals = globals
 
     def add_screen(self, screen):
         """Register a screen with the ScreenManager. The first screen to be added
@@ -96,6 +107,8 @@ class ScreenManager(BaseWidget):
         set_current = len(self.screens) == 0
 
         screen.manager = self
+        screen.globals = self.globals
+
         self.screens.append(screen)
 
         if set_current:
