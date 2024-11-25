@@ -20,6 +20,7 @@ from kivy import metrics
 from training import TrainingWidget
 from battle import MainWidget
 from attack import Attack
+from NotemonSelection import TestWidget
 
 # metrics allows kivy to create screen-density-indeptrainingent sizes.
 # Here, 20 dp will always be the same physical size on screen regardless of resolution or OS.
@@ -61,15 +62,52 @@ class IntroScreen(Screen):
         self.info.text += "→: switch to main\n"
         self.add_widget(self.info)
 
+        self.notemon_selection_widget = TestWidget()
+        self.add_widget(self.notemon_selection_widget)
+
         self.counter = 0
+
+        index = 0
+
+        x_margin = 1/10 #distance from sides of boxes to edge of screen
+        y_margin = 1/20 #distance from bottom of boxes to edge of screen
+        box_width = 7/20 #width of boxes
+        box_height = 1/6 #height of boxes
+        y_spacing = 1/14 # y-space between boxes
+
+        w = box_width * Window.width
+        h = box_height * Window.height
+
+        x = 1/2 * Window.width - 1/2 * box_width * Window.width
+        y = Window.height - ((index + 1) * box_height * Window.height + (index + 1) * y_spacing * Window.height)
+
 
         # A button is a widget. It must be added with add_widget()
         # button.bind allows you to set up a reaction to when the button is pressed (or released).
         # It takes a function as argument. You can define one, or just use lambda as an inline function.
         # In this case, the button will cause a screen switch
-        self.button = Button(text='Notemon', font_size=font_sz, size = (button_sz, button_sz), pos = (Window.width/2, Window.height/2))
-        self.button.bind(on_release= lambda x: self.switch_to('main'))
-        self.add_widget(self.button)
+        
+        self.button1 = Button(text='Notemon 1', font_size=font_sz, size = (button_sz, button_sz), pos = (x+w-765//2, y+h-400//2))
+        self.button1.bind(on_release= lambda x: self.switch_to('main'))
+        self.add_widget(self.button1)
+
+        index = 1
+        y = Window.height - ((index + 1) * box_height * Window.height + (index + 1) * y_spacing * Window.height)
+        self.button2 = Button(text='Notemon 2', font_size=font_sz, size = (button_sz, button_sz), pos = (x+w-765//2, y+h-400//2))
+        self.button2.bind(on_release= lambda x: self.switch_to('main'))
+        self.add_widget(self.button2)
+        
+        index = 2
+        y = Window.height - ((index + 1) * box_height * Window.height + (index + 1) * y_spacing * Window.height)
+        self.button3 = Button(text='Notemon 3', font_size=font_sz, size = (button_sz, button_sz), pos = (x+w-765//2, y+h-400//2))
+        self.button3.bind(on_release= lambda x: self.switch_to('main'))
+        self.add_widget(self.button3)
+
+        index = 3
+        y = Window.height - ((index + 1) * box_height * Window.height + (index + 1) * y_spacing * Window.height)
+        self.button4 = Button(text='Notemon 4', font_size=font_sz, size = (button_sz, button_sz), pos = (x+w-765//2, y+h-400//2))
+        self.button4.bind(on_release= lambda x: self.switch_to('main'))
+        self.add_widget(self.button4)
 
     def on_key_down(self, keycode, modifiers):
         if keycode[1] == '=':
@@ -87,9 +125,12 @@ class IntroScreen(Screen):
         # self.info.text += f'counter:{self.counter}\n'
         # self.counter += 1
 
+        if hasattr(self.notemon_selection_widget, 'on_update'):
+            self.notemon_selection_widget.on_update()
+
     # on_resize always gets called - even when a screen is not active.
     def on_resize(self, win_size):
-        self.button.pos = (Window.width/2, Window.height/2)
+        # self.button.pos = (Window.width/2, Window.height/2)
         resize_topleft_label(self.info)
 
 

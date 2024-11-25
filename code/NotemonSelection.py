@@ -40,7 +40,7 @@ class NotemonSelection(InstructionGroup):
 
         self.box = Line(rectangle = (x, y, w, h), width = 3)
         self.label = CLabelRect(cpos = (x + w // 2, y + h // 2), text = name)
-
+        
         self.add(self.box)
         self.add(self.label)
 
