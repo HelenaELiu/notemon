@@ -59,9 +59,9 @@ class NoteSequencer2(object):
             return
 
         self.playing = False
-        if self.on_cmd:
+        if self.on_cmd and self.on_cmd in self.sched.commands:
             self.sched.cancel(self.on_cmd)
-        if self.off_cmd:
+        if self.off_cmd and self.off_cmd in self.sched.commands:
             self.sched.cancel(self.off_cmd)
             self.off_cmd.execute() # cause note off to happen right now
         self.on_cmd = None

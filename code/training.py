@@ -51,7 +51,7 @@ attack_lanes = [(60, 62, 63, 65, 67, 69, 71, 72),
                 (60, 62, 63, 65, 67, 69, 70, 72)]
 
 # song data for winter, will eventually come from the song database
-# metro_time = 480 * 4
+metro_time = 480 * 4
 # lanes = (60, 62, 63, 65, 67, 69, 71, 72) # can change; should change for every song?
 # fur_elise_lanes = (69, 71, 72, 74, 75, 76, 77, 79)
 # magic_flute_lanes = (60, 62, 63, 65, 67, 69, 70, 72)
@@ -64,8 +64,6 @@ attack_objects = [Attack(attack_notes[i], metro_time, attack_lanes[i]) for i in 
 class TrainingWidget(BaseWidget):
     def __init__(self):
         super(TrainingWidget, self).__init__()
-
-        print('hi')
         # audio
         self.audio = Audio(2)
         self.synth = Synth()# create TempoMap, AudioScheduler
@@ -311,8 +309,8 @@ class Player(object):
 
         target_time = self.gems[self.idx][0]
         target_lane = self.gems[self.idx][1]
-        print(lane, target_lane)
-        print(self.tick, target_time)
+        # print(lane, target_lane)
+        # print(self.tick, target_time)
         if target_time - accuracy_window < self.tick:
             if self.defense or lane == target_lane:
                 self.display.gem_hit(self.idx)
