@@ -43,7 +43,7 @@ class IntroScreen(Screen):
         # button.bind allows you to set up a reaction to when the button is pressed (or released).
         # It takes a function as argument. You can define one, or just use lambda as an inline function.
         # In this case, the button will cause a screen switch
-        self.button = Button(text='Main', font_size=font_sz, size = (button_sz, button_sz), pos = (Window.width/2, Window.height/2))
+        self.button = Button(text='Notemon', font_size=font_sz, size = (button_sz, button_sz), pos = (Window.width/2, Window.height/2))
         self.button.bind(on_release= lambda x: self.switch_to('main'))
         self.add_widget(self.button)
 
@@ -77,7 +77,7 @@ class MainScreen(Screen):
         self.add_widget(self.info)
 
         # more buttons - one to switch back to the intro screen, and one to switch to the training screen.
-        self.button1 = Button(text='Intro', font_size=font_sz, size = (button_sz, button_sz), pos = (Window.width * .25, Window.height/2))
+        self.button1 = Button(text='Select \n Notemon', font_size=font_sz, size = (button_sz, button_sz), pos = (Window.width * .25, Window.height/2))
         self.button1.bind(on_release= lambda x: self.switch_to('intro'))
         self.add_widget(self.button1)
 

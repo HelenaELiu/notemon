@@ -161,7 +161,7 @@ class TrainingWidget(BaseWidget):
         self.info.text += f'attacks trained: {self.attacks_trained}\n'
         self.info.text += f'num objects: {self.attacks[self.curr_attack_index]["game_display"].get_num_object()}\n'
         self.info.text += f'accuracy of run: {self.attacks[self.curr_attack_index]["game_display"].acc}\n'
-        self.info.text += f'training percent: {self.attacks[self.curr_attack_index]["game_display"].get_training_percent():.2f}'
+        self.info.text += f'training percent: {self.attacks[self.curr_attack_index]["game_display"].get_training_percent() * 100:.0f}%'
 
 # Displays all game elements: nowbar, buttons, downbeats, gems
 class GameDisplay(InstructionGroup):
