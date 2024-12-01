@@ -62,7 +62,7 @@ class MainWidget(BaseWidget):
         self.display = GameDisplay(attack_objects)
         self.canvas.add(self.display)
 
-        self.audio_ctrl = AudioController(attack_objects)
+        self.audio_ctrl = AudioController()
         self.player = Player(self.audio_ctrl, self.display, 58)
         self.opp = Opponent(.3, self.audio_ctrl)
         self.player.set_opponent(self.opp)
@@ -112,7 +112,7 @@ class MainWidget(BaseWidget):
         self.info.text = 'Let\'s Battle!\n'
 
 class AudioController(object):
-    def __init__(self, attacks):
+    def __init__(self):
         super(AudioController, self).__init__()
         self.audio = Audio(2)
         self.synth = Synth()
@@ -127,8 +127,6 @@ class AudioController(object):
 
         #create song
         self.seqs = []
-
-        self.attacks = attacks
 
         self.next_note_cmd = None
         self.defense_note = None
@@ -315,6 +313,7 @@ class Player(object):
     # Scheduled during attack
     def note_off(self, tick, attack, note):
         attack_name = attack_database.names[attack]
+        #attack_name = "dynamite"
         note_value = attack_database.notes[attack_name][note]
 
         _, pitch = note_value
@@ -323,6 +322,7 @@ class Player(object):
     # Scheduled during attack
     def next_note(self, tick, attack, note):
         attack_name = attack_database.names[attack]
+        #attack_name = "dynamite"
         note_value = attack_database.notes[attack_name][note]
         num_notes = len(attack_database.notes[attack_name])
 
@@ -365,6 +365,7 @@ class Player(object):
     def on_update(self):
         self.audio_ctrl.on_update()
         self.display.on_update()
+
 
 class Opponent():
     def __init__(self, skill, audio_ctrl):
@@ -442,10 +443,11 @@ class Opponent():
 
     def on_attack(self):
         # Successful defense
-        if random.random() < self.skill:
-            self.audio_ctrl.on_opp_defense()
-        else:
-            self.damage += DAMAGE_MULTIPLIER
+        #if random.random() < self.skill:
+        #    self.audio_ctrl.on_opp_defense()
+        #else:
+        #    self.damage += DAMAGE_MULTIPLIER
+        pass
 
 
 if __name__ == "__main__":
