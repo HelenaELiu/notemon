@@ -9,7 +9,7 @@ class AttackDatabase(object):
             }
 
         self.lanes = {'winter': (60, 62, 63, 65, 67, 69, 71, 72),
-                'fifth symphony': (),
+                'fifth symphony': (62, 63, 65, 67),
                 'fur elise': (69, 71, 72, 74, 75, 76, 77, 79),
                 'magic flute': (60, 62, 63, 65, 67, 69, 70, 72),
                 }
