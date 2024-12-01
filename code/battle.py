@@ -18,7 +18,11 @@ import random
 
 from AttackDisplay import AttackDisplay
 from NotemonDisplay import NotemonDisplay
+from AttackDatabase import AttackDatabase
+from NotemonDatabase import NotemonDatabase
 from attack import Attack
+
+attack_database = AttackDatabase()
 
 x_margin = 1/10 #distance from sides of boxes to edge of screen
 y_margin = 1/20 #distance from bottom of boxes to edge of screen
@@ -43,7 +47,6 @@ INTERVALS = {x : [] for x in range(8)}
 for c in CHORDS:
     for i in range(len(c)):
         INTERVALS[c[i]].append(set(c[0:i]+c[i+1:]))
-print(INTERVALS)
 
 NUM_ATTACKS = 4
 DAMAGE_MULTIPLIER = 6
@@ -56,7 +59,7 @@ INTERVAL = 2 # Third
 class MainWidget(BaseWidget):
     def __init__(self, attack_objects):
         super(MainWidget, self).__init__()
-        self.display = GameDisplay(unlocked=[a for a in attack_objects])
+        self.display = GameDisplay(attack_objects)
         self.canvas.add(self.display)
 
         self.audio_ctrl = AudioController(attack_objects)
@@ -88,7 +91,7 @@ class MainWidget(BaseWidget):
         if note is not None:
             if self.opp.attacking and self.player.defending:
                 # Note match!!
-                root, key_type = key['fifth_symphony']
+                root, key_type = attack_database.keys['fifth_symphony']
                 note_to_match = MINOR_KEY_TO_IDX[self.opp.note - root] if key_type == 'minor' else MAJOR_KEY_TO_IDX[self.opp_note - root]
                 intervals = [i for i in INTERVALS[note_to_match] if note in i]
 
@@ -311,16 +314,23 @@ class Player(object):
 
     # Scheduled during attack
     def note_off(self, tick, attack, note):
-        _, pitch = self.audio_ctrl.attacks[attack].get_note(note)
+        attack_name = attack_database.names[attack]
+        note_value = attack_database.notes[attack_name][note]
+
+        _, pitch = note_value
         self.audio_ctrl.synth.noteoff(0, pitch)
 
     # Scheduled during attack
     def next_note(self, tick, attack, note):
-        length, pitch = self.audio_ctrl.attacks[attack].get_note(note)
+        attack_name = attack_database.names[attack]
+        note_value = attack_database.notes[attack_name][note]
+        num_notes = len(attack_database.notes[attack_name])
+
+        length, pitch = note_value
         self.audio_ctrl.synth.noteon(0, pitch, 100)
         self.audio_ctrl.sched.post_at_tick(self.note_off, tick + length*.95, [attack, note])
 
-        if self.audio_ctrl.attacks[attack].last_note(note):
+        if note == num_notes - 1:
             self.audio_ctrl.next_note_cmd = None
             self.opponent.on_attack()
             return
@@ -393,25 +403,33 @@ class Opponent():
         if self.audio_ctrl.defense_note:
             self.audio_ctrl.synth.noteoff(1, self.audio_ctrl.defense_note)
             self.audio_ctrl.defense_note = None
+        
+        attack_name = attack_database.names[attack]
+        note_value = attack_database.notes[attack_name][note]
+        num_notes = len(attack_database.notes[attack_name])
 
-        length, pitch = self.audio_ctrl.attacks[attack].get_note(note)
+        _, pitch = note_value
         self.audio_ctrl.synth.noteoff(0, pitch)
         self.note = None
         self.player_timeout()
 
-        if self.audio_ctrl.attacks[attack].last_note(note):
+        if note == num_notes - 1:
             self.unset_attack()
 
     # Scheduled during attack
     def next_note(self, tick, attack, note):
         self.set_attack()
 
-        length, pitch = self.audio_ctrl.attacks[attack].get_note(note)
+        attack_name = attack_database.names[attack]
+        note_value = attack_database.notes[attack_name][note]
+        num_notes = len(attack_database.notes[attack_name])
+
+        length, pitch = note_value
         self.audio_ctrl.synth.noteon(0, pitch, 100)
         self.note = pitch
         self.audio_ctrl.sched.post_at_tick(self.note_off, tick + 4*length*.95, [attack, note])
 
-        if self.audio_ctrl.attacks[attack].last_note(note):
+        if note == num_notes - 1:
             return
 
         self.audio_ctrl.sched.post_at_tick(self.next_note, tick + 4*length, [attack, note+1])
