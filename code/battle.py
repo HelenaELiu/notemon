@@ -153,19 +153,19 @@ class GameDisplay(InstructionGroup):
         #attack boxes
         self.boxes = []
 
-        self.box0 = AttackDisplay(0, "Winter", 10, unlocked[0])
+        self.box0 = AttackDisplay("Winter", 0, unlocked[0])
         self.boxes.append(self.box0)
         self.add(self.box0)
 
-        self.box1 = AttackDisplay(1, "5th Symphony", 40, unlocked[1])
+        self.box1 = AttackDisplay("5th Symphony", 1, unlocked[1])
         self.boxes.append(self.box1)
         self.add(self.box1)
 
-        self.box2 = AttackDisplay(2, "Fur Elise", 20, unlocked[2])
+        self.box2 = AttackDisplay("Fur Elise", 2, unlocked[2])
         self.boxes.append(self.box2)
         self.add(self.box2)
 
-        self.box3 = AttackDisplay(3, "Magic Flute", 30, unlocked[3])
+        self.box3 = AttackDisplay("Magic Flute", 3, unlocked[3])
         self.boxes.append(self.box3)
         self.add(self.box3)
 

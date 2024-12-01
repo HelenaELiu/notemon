@@ -21,15 +21,16 @@ y_spacing = 1/20 # y-space between boxes
 
 # Display for a single attack box
 class AttackDisplay(InstructionGroup):
-    def __init__(self, attack, index, training=False, y_marg=y_margin):
+    def __init__(self, attack, index, unlocked, training=False, y_marg=y_margin):
         super(AttackDisplay, self).__init__()
         self.attack = attack
         self.index = index
         self.training = training
+        self.unlocked = unlocked
         self.y_margin = y_marg
 
         #opponents attacks are not shown, only ours are
-        if training or self.attack.unlocked:
+        if training or self.unlocked:
             #graphics
             colors = [0.1, 0.5, 0.7, 0.85]
             self.color = Color(hsv=(colors[index], 1, 1))
@@ -47,29 +48,29 @@ class AttackDisplay(InstructionGroup):
 
             if index == 0:
                 self.box = Line(rectangle = (x1, y1, w, h), width = 3)
-                self.label = CLabelRect(cpos = (x1 + w // 2, y1 + h // 2), text = self.attack.name)
+                self.label = CLabelRect(cpos = (x1 + w // 2, y1 + h // 2), text = self.attack)
             elif index == 1:
                 self.box = Line(rectangle = (x2, y1, w, h), width = 3)
-                self.label = CLabelRect(cpos = (x2 + w // 2, y1 + h // 2), text = self.attack.name)
+                self.label = CLabelRect(cpos = (x2 + w // 2, y1 + h // 2), text = self.attack)
             elif index == 2:
                 self.box = Line(rectangle = (x1, y2, w, h), width = 3)
-                self.label = CLabelRect(cpos = (x1 + w // 2, y2 + h // 2), text = self.attack.name)
+                self.label = CLabelRect(cpos = (x1 + w // 2, y2 + h // 2), text = self.attack)
             elif index == 3:
                 self.box = Line(rectangle = (x2, y2, w, h), width = 3)
-                self.label = CLabelRect(cpos = (x2 + w // 2, y2 + h // 2), text = self.attack.name)
+                self.label = CLabelRect(cpos = (x2 + w // 2, y2 + h // 2), text = self.attack)
 
             self.add(self.box)
             self.add(self.label)
 
     #when considering this box for selection, make outline brighter and larger
     def select(self):
-        if self.training or self.attack.unlocked:
+        if self.training or self.unlocked:
             self.color.a = 1
             self.box.width = 10
 
     #revert outline to normal
     def unselect(self):
-        if self.training or self.attack.unlocked:
+        if self.training or self.unlocked:
             self.color.a = 0.7
             self.box.width = 3
 
