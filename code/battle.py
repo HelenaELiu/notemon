@@ -17,6 +17,7 @@ from imslib.synth import Synth
 import random
 
 from AttackDisplay import AttackDisplay
+from NotemonDisplay import NotemonDisplay
 from attack import Attack
 
 x_margin = 1/10 #distance from sides of boxes to edge of screen
@@ -55,7 +56,7 @@ INTERVAL = 2 # Third
 class MainWidget(BaseWidget):
     def __init__(self, attack_objects):
         super(MainWidget, self).__init__()
-        self.display = GameDisplay(unlocked=[a.unlocked for a in attack_objects])
+        self.display = GameDisplay(unlocked=[a for a in attack_objects])
         self.canvas.add(self.display)
 
         self.audio_ctrl = AudioController(attack_objects)
@@ -106,46 +107,6 @@ class MainWidget(BaseWidget):
         self.player.on_update()
 
         #self.info.text = 'Let\'s Battle!\n'
-
-# Display for a single notemon sprite
-class NotemonDisplay(InstructionGroup):
-    def __init__(self, health, opponent):
-        super(NotemonDisplay, self).__init__()
-
-        self.health = health
-        self.opponent = opponent
-        self.fainted = False
-
-        #graphics
-        r = radius_margin * Window.width
-        
-        if opponent:
-            self.color = Color(1, 0, 0)
-            self.x = (1 - 2 * x_margin) * Window.width
-            self.y = (1 - 3 * y_margin) * Window.height
-        else:
-            self.color = Color(0, 1, 0)
-            self.x = 2 * x_margin * Window.width
-            self.y = (1 - 6 * y_margin) * Window.height
-        
-        self.notemon = Line(circle = (self.x, self.y, r), width = 3)
-        self.label = CLabelRect(cpos = (self.x, self.y), text = str(self.health))
-
-        self.add(self.color)
-        self.add(self.notemon)
-        self.add(self.label)
-    
-    def take_damage(self, damage):
-        if self.health - damage < 0:
-            self.health = 0
-            self.fainted = True
-        else:
-            self.health -= damage
-    
-    def on_update(self):
-        self.remove(self.label)
-        self.label = CLabelRect(cpos = (self.x, self.y), text = str(self.health))
-        self.add(self.label)
 
 key = {'fifth_symphony' : (60, 'minor')}
 
@@ -229,8 +190,10 @@ class GameDisplay(InstructionGroup):
         self.boxes[self.current_box].select()
 
         #notemon sprites
-        self.notemon_us = NotemonDisplay(100, False)
-        self.notemon_opponent = NotemonDisplay(100, True)
+        self.us_img = "sprites/meloetta-green.png"
+        self.opponent_img = "sprites/meloetta-orange.png"
+        self.notemon_us = NotemonDisplay(100, False, self.us_img)
+        self.notemon_opponent = NotemonDisplay(100, True, self.opponent_img)
 
         self.add(self.notemon_us)
         self.add(self.notemon_opponent)
