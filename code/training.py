@@ -20,8 +20,7 @@ from attack import Attack
 from training_aud_ctrl import TrainingAudioController
 from AttackDisplay import AttackDisplay, AttackBox
 from training_display_components import GemDisplay, ButtonDisplay, NowbarDisplay, lane_w_margin, lane_h, btns, max_x, min_x, accuracy_window
-
-from attack_globals import attacks
+from AttackDatabase import AttackDatabase
 
 y_margin = 0.3 #distance from bottom of boxes to edge of screen
 
@@ -325,4 +324,5 @@ class Player(object):
                 self.idx = 0
 
 if __name__ == "__main__":
+    attacks = AttackDatabase().get_attack_roster(0)
     run(TrainingWidget(attacks))

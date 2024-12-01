@@ -22,13 +22,15 @@ from battle import MainWidget
 from attack import Attack
 from NotemonSelection import TestWidget
 
-from attack_globals import attacks
+from AttackDatabase import AttackDatabase
 
 # metrics allows kivy to create screen-density-indeptrainingent sizes.
 # Here, 20 dp will always be the same physical size on screen regardless of resolution or OS.
 # Another option is to use metrics.pt or metrics.sp. See https://kivy.org/doc/stable/api-kivy.metrics.html
 font_sz = metrics.dp(20)
 button_sz = metrics.dp(100)
+
+attacks = AttackDatabase().get_attack_roster(0)
 
 # IntroScreen is just like a MainWidget, but it derives from Screen instead of BaseWidget.
 # This allows it to work with the ScreenManager system.

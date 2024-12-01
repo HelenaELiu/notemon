@@ -16,6 +16,7 @@ from imslib.clock import Clock, SimpleTempoMap, AudioScheduler, tick_str, kTicks
 from imslib.synth import Synth
 import random
 
+from attack import Attack
 
 class AttackDatabase(object):
     def __init__(self):
@@ -61,3 +62,21 @@ class AttackDatabase(object):
                                     (240 * 2, 72),),
             'dynamite': ((480, 73), (480, 71), (480, 69), (360, 68), (240, 66), (120, 64), (240, 64),),
             }
+
+        self.damages = [10, 40, 20, 30]
+        self.damages = {
+            'winter': 10,
+            'fifth symphony': 40,
+            'fur elise': 20,
+            'magic flute': 30,
+            }
+
+    def index(self, index):
+        name = self.names[index]
+        return {"name": name, "lanes": self.lanes[name], "notes": self.notes[name], "damage": self.damages[name], "key": self.keys[name]}
+
+    def get_attack(self, index, unlocked):
+        return Attack(self.index(index), self.metro_time, unlocked=unlocked)
+
+    def get_attack_roster(self, starting_index):
+        return [self.get_attack(i, i==0) for i in range(4)]
