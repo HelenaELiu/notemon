@@ -52,8 +52,8 @@ class NotemonDisplay(InstructionGroup):
         self.x -= img_size[0] / 2
         self.y -= img_size[1] / 2
 
-        self.label_x = self.x + 70
-        self.label_y = self.y - 50
+        self.label_x = self.x + img_size[0] / 2
+        self.label_y = self.y - img_size[1] / 4
         
         self.notemon = Rectangle(texture = self.img, pos = (self.x, self.y), size = img_size)
         self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = "health: " + str(self.health))
