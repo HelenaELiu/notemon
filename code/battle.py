@@ -106,25 +106,7 @@ class MainWidget(BaseWidget):
 
         self.player.on_update()
 
-        #self.info.text = 'Let\'s Battle!\n'
-
-key = {'fifth_symphony' : (60, 'minor')}
-
-winter = ((240, 60), (240, 72), (240, 67), (240, 63), 
-          (240, 60), (240, 72), (240, 67), (240, 63), (240, 60),)
-fifth_symphony = ((240, 67), (240, 67), (240, 67), (240 * 5, 63), 
-                  (240, 65), (240, 65), (240, 65), (240 * 5, 62),)
-fur_elise = ((240, 76), (240, 75), (240, 76), (240, 75), 
-             (240, 76), (240, 71), (240, 74), (240, 72), (240 * 2, 69),)
-magic_flute = ((120, 69), (120, 67), (120, 69), (120, 70), 
-               (240, 72), (240, 72), (240, 72), (240, 72), 
-               (240, 72), (240, 72), (240, 72), (240, 72), (240 * 4, 65),)
-
-# song data for winter, will eventually come from the song database
-metro_time = 480 * 4
-lanes = (60, 62, 63, 65, 67, 69, 71, 72) # can change; should change for every song?
-fur_elise_lanes = (69, 71, 72, 74, 75, 76, 77, 79)
-magic_flute_lanes = (60, 62, 63, 65, 67, 69, 70, 72)
+        self.info.text = 'Let\'s Battle!\n'
 
 class AudioController(object):
     def __init__(self, attacks):
@@ -194,6 +176,7 @@ class GameDisplay(InstructionGroup):
         self.opponent_img = "sprites/meloetta-orange.png"
         self.notemon_us = NotemonDisplay(100, False, self.us_img)
         self.notemon_opponent = NotemonDisplay(100, True, self.opponent_img)
+        self.opponent_name = "melorange"
 
         self.add(self.notemon_us)
         self.add(self.notemon_opponent)
@@ -204,7 +187,7 @@ class GameDisplay(InstructionGroup):
 
         self.label_x = Window.width // 2
         self.label_y = (1 - 9 * y_margin) * Window.height
-        self.text = "You encountered red circle!"
+        self.text = "You encountered " + self.opponent_name + "!"
         self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = self.text)
         
         self.add(self.label)
