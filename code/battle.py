@@ -222,11 +222,13 @@ class GameDisplay(InstructionGroup):
                 self.boxes[self.current_box].select()
     
     def attack_opponent(self, index):
-        damage = self.boxes[index].damage
+        #TODO: fix this
+        damage = 10
+        #damage = self.boxes[index].damage
         self.notemon_opponent.take_damage(damage)
 
         self.remove(self.label)
-        self.text = "You used " + self.boxes[index].name + "!\n"
+        self.text = "You used " + self.boxes[index].attack + "!\n"
         self.text += "It dealt " + str(damage) + " damage!\n"
 
         if self.notemon_opponent.fainted:
@@ -236,11 +238,13 @@ class GameDisplay(InstructionGroup):
         self.add(self.label)
     
     def lose_health(self, index):
-        damage = self.boxes[index].damage
+        #TODO: fix this
+        damage = 10
+        #damage = self.boxes[index].damage
         self.notemon_us.take_damage(damage)
 
         self.remove(self.label)
-        self.text = "The opponent used " + self.boxes[index].name + "!\n"
+        self.text = "The opponent used " + self.boxes[index].attack + "!\n"
         self.text += "It dealt " + str(damage) + " damage!\n"
 
         if self.notemon_us.fainted:
@@ -312,8 +316,8 @@ class Player(object):
 
     # Scheduled during attack
     def note_off(self, tick, attack, note):
-        attack_name = attack_database.names[attack]
-        #attack_name = "dynamite"
+        #attack_name = attack_database.names[attack]
+        attack_name = "the feels"
         note_value = attack_database.notes[attack_name][note]
 
         _, pitch = note_value
@@ -321,8 +325,8 @@ class Player(object):
 
     # Scheduled during attack
     def next_note(self, tick, attack, note):
-        attack_name = attack_database.names[attack]
-        #attack_name = "dynamite"
+        #attack_name = attack_database.names[attack]
+        attack_name = "the feels"
         note_value = attack_database.notes[attack_name][note]
         num_notes = len(attack_database.notes[attack_name])
 

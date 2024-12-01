@@ -22,7 +22,8 @@ class AttackDatabase(object):
     def __init__(self):
         self.metro_time = 480 * 4
         
-        self.names = ["winter", "fifth symphony", "fur elise", "magic flute", "hello", "espresso", "rolling in the deep", "dynamite"]
+        self.names = ["winter", "fifth symphony", "fur elise", "magic flute", "hello", "espresso", "rolling in the deep", "dynamite", "just the way you are", "uptown funk", "shape of you", 
+        "the feels"]
 
         self.keys = {
             'winter': (60, 'minor'),
@@ -33,6 +34,10 @@ class AttackDatabase(object):
             'espresso': (60, 'major'),
             'rolling in the deep': (60, 'minor'),
             'dynamite': (64, 'major'),
+            'just the way you are': (65, 'major'),
+            'uptown funk': (65, 'major'),
+            'shape of you': (61, 'minor'),
+            'the feels': (70, 'minor'),
             }
 
         self.lanes = {
@@ -44,6 +49,10 @@ class AttackDatabase(object):
             'espresso': (55, 57, 59, 60, 62),
             'rolling in the deep': (67, 70, 72),
             'dynamite': (64, 66, 68, 69, 71, 73),
+            'just the way you are': (65, 67, 69, 70),
+            'uptown funk': (60, 62, 65),
+            'shape of you': (61, 64, 66, 68),
+            'the feels': (69, 71, 74),
             }
 
         self.notes = {
@@ -52,18 +61,24 @@ class AttackDatabase(object):
             'fifth symphony': ((240, 67), (240, 67), (240, 67), (240 * 5, 63), 
                 (240, 65), (240, 65), (240, 65), (240 * 5, 62),),
             'fur elise': ((240, 76), (240, 75), (240, 76), (240, 75), 
-                (240, 76), (240, 71), (240, 74), (240, 72), (240 * 2, 69),), 
+                (240, 76), (240, 71), (240, 74), (240, 72), (480, 69),), 
             'magic flute': ((120, 69), (120, 67), (120, 69), (120, 70), 
                 (240, 72), (240, 72), (240, 72), (240, 72), 
                 (240, 72), (240, 72), (240, 72), (240, 72), (240 * 4, 65),),
-            'hello': ((240, 65), (240, 65), (240, 68), (240, 68), (240, 70), (240, 70), (240 * 2, 70),),
+            'hello': ((240, 65), (240, 65), (240, 68), (240, 68), (240, 70), (240, 70), (480, 70),),
             'espresso': ((240, 55), (240, 55), (240, 59), (240, 62), (240, 60), (240, 59), (240, 57),),
             'rolling in the deep': ((240, 67), (240, 70), (240, 67), (240, 70), (240, 67), (240, 70), 
-                                    (240 * 2, 72),),
+                                    (480, 72),),
             'dynamite': ((480, 73), (480, 71), (480, 69), (360, 68), (240, 66), (120, 64), (240, 64),),
+            'just the way you are': ((480, 70), (480, 69), (480, 65), (480, 67), (480, 65), ),
+            'uptown funk': ((360, 65), (360, 65), (240, 60), (360, 62), (360, 62), (240, 60), 
+                            (360, 62), (360, 62), (240, 60), (360, 62), (360, 62),),
+            'shape of you': ((240, 64), (240, 66), (480, 68), (240, 66), (240, 64), (480, 64), 
+                             (480, 66), (480, 61), ),
+            'the feels': ((480, 74), (480, 71), (240, 71), (120, 69), (360, 71), (480, 74),
+                          (240, 71), (480, 71),),
             }
 
-        self.damages = [10, 40, 20, 30]
         self.damages = {
             'winter': 10,
             'fifth symphony': 40,

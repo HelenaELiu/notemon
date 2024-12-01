@@ -19,11 +19,11 @@ class NotemonDatabase(object):
                         "melopurple": 200,}
 
         #attacks
-        self.attacks = {"melored": ["winter", "fifth symphony", "fur elise", "magic flute"],
-                        "meloyellow": [],
-                        "melorange": [],
-                        "melogreen": [],
-                        "meloblue": [],
-                        "melopurple": [],}
+        self.attacks = {"melored": ["winter", "magic flute", "rolling in the deep", "the feels"],
+                        "meloyellow": ["fifth symphony", "fur elise", "hello", "shape of you"],
+                        "melorange": ["fur elise", "rolling in the deep", "dynamite", "uptown funk"],
+                        "melogreen": ["magic flute", "hello", "just the way you are", "uptown funk", "shape of you"],
+                        "meloblue": ["hello", "espresso", "dynamite", "just the way you are"],
+                        "melopurple": ["rolling in the deep", "uptown funk", "shape of you", "the feels"],}
 
 #notemon_database = NotemonDatabase()
