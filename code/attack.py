@@ -2,16 +2,19 @@ from functools import reduce
 
 # Attack wrapper
 class Attack:
-    def __init__(self, name, notes, metro_time, scale, metro=[(480, 60)], unlocked=False):
-        self.name = name
-        self.notes = notes
+    def __init__(self, attack, metro_time, metro=[(480, 60)], unlocked=False):
+        self.name = attack["name"]
+        self.notes = attack["notes"]
+        self.damage = attack["damage"]
+        self.lanes = attack["lanes"] # what note each button corresponds to
+
         self.metro_time = metro_time
-        self.lanes = scale # what note each button corresponds to
         self.metro = metro # default is one ping every 480 ticks
+
         self.unlocked = unlocked
 
-        self.song_time = reduce(lambda a,x: a+x[0], notes, 0)
-        sd = [(duration, scale.index(pitch)) for duration, pitch in notes]
+        self.song_time = reduce(lambda a,x: a+x[0], self.notes, 0)
+        sd = [(duration, self.lanes.index(pitch)) for duration, pitch in self.notes]
         tot = metro_time
         gems = []
         for gem in sd:
@@ -24,4 +27,7 @@ class Attack:
 
     def last_note(self, idx):
         return idx == len(self.notes) - 1
+
+    def unlock(self):
+        self.unlocked = True
 

@@ -18,25 +18,15 @@ from kivy.core.window import Window
 
 from attack import Attack
 from training_aud_ctrl import TrainingAudioController
-from AttackDisplay import AttackDisplay, box_select
+from AttackDisplay import AttackDisplay, AttackBox
 from training_display_components import GemDisplay, ButtonDisplay, NowbarDisplay, lane_w_margin, lane_h, btns, max_x, min_x, accuracy_window
+
+from attack_globals import attacks
+
 y_margin = 0.3 #distance from bottom of boxes to edge of screen
 
-# song data for winter, will eventually come from the song database
-# winter_metro_time = 480 * 4
-# winter_notes = ((240, 60), (240, 72), (240, 67), (240, 63), 
-#           (240, 60), (240, 72), (240, 67), (240, 63), (240, 60),)
-# # song_time = reduce(lambda a,x: a+x[0], winter, 0)
-# winter_lanes = (60, 62, 63, 65, 67, 69, 71, 72) # can change; should change for every song?
-# metro = ((480, 60),)
-
-
-
-# array
-# names, notes, lanes
-
 class TrainingWidget(BaseWidget):
-    def __init__(self, attack_objects):
+    def __init__(self, attacks):
         super(TrainingWidget, self).__init__()
         # audio
         self.audio = Audio(2)
@@ -49,25 +39,20 @@ class TrainingWidget(BaseWidget):
         self.sched.set_generator(self.synth)
 
         # change this to make the attacks not all just winter haha
-        self.attacks = [{"name":attack_objects[i].name,"attack_obj":attack_objects[i]} for i in range(4)]
+        self.attacks = attacks
 
         ### each ATTACK gets an AUDIO CONTROL, GAME DISPLAY, PLAYER, and ATTACK DISPLAY
-        for attack_ind in range(len(self.attacks)):
-            # audio control
-            self.attacks[attack_ind]["audio_ctrl"] = TrainingAudioController(self.synth, self.sched, self.attacks[attack_ind]["attack_obj"])
-            # game display
-            self.attacks[attack_ind]["game_display"] = GameDisplay(self.attacks[attack_ind]["attack_obj"])
-            # self.canvas.add(self.attacks[attack]["game_display"])
-            # player needs the above
-            self.attacks[attack_ind]["player"] = Player(self.attacks[attack_ind]["attack_obj"], self.attacks[attack_ind]["audio_ctrl"], self.attacks[attack_ind]["game_display"])
-            self.attacks[attack_ind]["attack_display"] = AttackDisplay(attack_ind, self.attacks[attack_ind]["name"], 0, True, y_marg=y_margin)
-            self.canvas.add(self.attacks[attack_ind]["attack_display"])
+        self.audio_ctrl = [TrainingAudioController(self.synth, self.sched, attack) for attack in attacks]
+        self.game_display = [GameDisplay(attack) for attack in attacks]
+        self.player = [Player(attacks[i], self.audio_ctrl[i], self.game_display[i]) for i in range(len(attacks))]
+        self.attack_box = AttackBox(attacks, True, y_marg=y_margin)
+        self.canvas.add(self.attack_box)
         
         self.curr_attack_index = 0  # attack that is currently selected
-        self.attacks[self.curr_attack_index]["attack_display"].select() # display attack as selected in the selector
-        self.canvas.add(self.attacks[self.curr_attack_index]["game_display"]) # display current attack
+        self.attack_box.select(self.curr_attack_index) # display attack as selected in the selector
+        self.canvas.add(self.game_display[self.curr_attack_index]) # display current attack
         self.training = False
-        self.attacks_trained = 0 # keep track of how many attacks trained
+        self.attacks_trained = 1 # keep track of how many attacks trained, 1 by default
 
         self.info = topleft_label()
         self.add_widget(self.info)
@@ -76,66 +61,64 @@ class TrainingWidget(BaseWidget):
 
         # only change selected attack if not actively training
         if not self.training and keycode[1] in ('right', 'left', 'up', 'down'):
-            new_ind = box_select(keycode[1], self.curr_attack_index)
+            new_ind = self.attack_box.move(keycode[1], self.curr_attack_index)
             if new_ind != self.curr_attack_index:
-                self.attacks[self.curr_attack_index]["attack_display"].unselect()
-                self.canvas.remove(self.attacks[self.curr_attack_index]["game_display"])
+                self.canvas.remove(self.game_display[self.curr_attack_index])
                 self.curr_attack_index = new_ind
-                self.canvas.add(self.attacks[self.curr_attack_index]["game_display"])
-                self.attacks[self.curr_attack_index]["attack_display"].select()
+                self.canvas.add(self.game_display[self.curr_attack_index])
 
         # train the selected attack
         if keycode[1] == "spacebar" and not self.training:
-            self.attacks[self.curr_attack_index]["audio_ctrl"].play()
-            self.attacks[self.curr_attack_index]["player"].done = False
+            self.audio_ctrl[self.curr_attack_index].play()
+            self.player[self.curr_attack_index].done = False
 
         # play a note 
         button_idx = lookup(keycode[1], btns, (0,1,2,3,4,5,6,7))
         if button_idx != None:
             # print('down', button_idx)
-            self.attacks[self.curr_attack_index]["player"].on_button_down(button_idx)
+            self.player[self.curr_attack_index].on_button_down(button_idx)
 
     def on_key_up(self, keycode):
         # button up
         button_idx = lookup(keycode[1], btns, (0,1,2,3,4,5,6,7))
         if button_idx != None:
             # print('up', button_idx)
-            self.attacks[self.curr_attack_index]["player"].on_button_up(button_idx)
+            self.player[self.curr_attack_index].on_button_up(button_idx)
 
     def scoring(self):
         # Get the training accuracy percentage
-        training_percent = self.attacks[self.curr_attack_index]["game_display"].get_training_percent()
+        training_percent = self.game_display[self.curr_attack_index].get_training_percent()
 
         # Check if the training is mastered
-        if training_percent > 0.5 and not self.attacks[self.curr_attack_index]['attack_obj'].unlocked:
+        if training_percent > 0.5 and not self.attacks[self.curr_attack_index].unlocked:
             self.attacks_trained += 1
-            self.attacks[self.curr_attack_index]['attack_obj'].unlocked = True
+            self.attacks[self.curr_attack_index].unlocked = True
             return
 
     # handle changing displayed elements when window size changes
     # This function should call GameDisplay.on_resize
     def on_resize(self, win_size):
-        for attack in self.attacks:
-            attack["game_display"].on_resize(win_size)
+        for gd in self.game_display:
+            gd.on_resize(win_size)
 
     def on_update(self):
         self.audio.on_update() # used to be # self.audio_ctrl.on_update()
         # everyone uses audio's time now, which is in ticks instead of seconds
-        now = self.attacks[self.curr_attack_index]["audio_ctrl"].get_tick()
-        self.attacks[self.curr_attack_index]["game_display"].on_update(now)
-        self.attacks[self.curr_attack_index]["player"].on_update(now)
+        now = self.audio_ctrl[self.curr_attack_index].get_tick()
+        self.game_display[self.curr_attack_index].on_update(now)
+        self.player[self.curr_attack_index].on_update(now)
         
         self.scoring()
 
-        self.training = reduce(lambda tot,att: tot or att["audio_ctrl"].training, self.attacks, False)
+        self.training = reduce(lambda tot,aud_ctrl: tot or aud_ctrl.training, self.audio_ctrl, False)
 
         self.info.text = 'p: pause/unpause song\n'
         self.info.text += f'song time: {now:.2f}\n'
         self.info.text += f'index {self.curr_attack_index}\n'
         self.info.text += f'attacks trained: {self.attacks_trained}\n'
-        self.info.text += f'num objects: {self.attacks[self.curr_attack_index]["game_display"].get_num_object()}\n'
-        self.info.text += f'accuracy of run: {self.attacks[self.curr_attack_index]["game_display"].acc}\n'
-        self.info.text += f'training percent: {self.attacks[self.curr_attack_index]["game_display"].get_training_percent() * 100:.0f}%'
+        self.info.text += f'num objects: {self.game_display[self.curr_attack_index].get_num_object()}\n'
+        self.info.text += f'accuracy of run: {self.game_display[self.curr_attack_index].acc}\n'
+        self.info.text += f'training percent: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%'
 
 # Displays all game elements: nowbar, buttons, downbeats, gems
 class GameDisplay(InstructionGroup):
@@ -342,4 +325,4 @@ class Player(object):
                 self.idx = 0
 
 if __name__ == "__main__":
-    run(TrainingWidget())
+    run(TrainingWidget(attacks))
