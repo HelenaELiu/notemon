@@ -75,7 +75,7 @@ class MainWidget(Screen):
         self.canvas.add(self.display)
 
         self.player_audio_ctrl = [PlayerAudioController(self.synth, self.sched, attack, index, self.display.opponent_defense) for (index, attack) in enumerate(self.player_attacks)]
-        self.player = Player(self.player_audio_ctrl, self.display)
+        self.player = Player(self.player_audio_ctrl, self.display, self.rhythm_display)
 
     def on_exit(self):
         self.canvas.remove(self.display)
@@ -103,7 +103,7 @@ class MainWidget(Screen):
             # TODO play bass drum or something
             self.rhythm_display[self.opp_box_played].on_button_down()
             target_time, _ = self.op_attacks[self.opp_box_played].gems[self.gem_idx]
-            if target_time - accuracy_window < self.tick:
+            if abs(target_time - self.tick) < accuracy_window:
                 self.rhythm_display[self.opp_box_played].gem_hit(self.gem_idx)
             if self.gem_idx < len(self.op_attacks[self.opp_box_played].gems) - 1:
                 self.gem_idx += 1
@@ -218,7 +218,7 @@ class GameDisplay(InstructionGroup):
         self.update_label(new_text)
 
     def opponent_defense(self, tick, box):
-        if random.random() < self.opponent_skill:
+        if random.random() >= self.opponent_skill:
             damage = self.box.get_damage(box)
             new_text = f"It dealt {damage} damage!\n"
             self.notemon_opponent.take_damage(damage)
@@ -249,11 +249,12 @@ class GameDisplay(InstructionGroup):
 # Handles game logic.
 # Controls the GameDisplay and AudioCtrl based on what happens
 class Player(object):
-    def __init__(self, audio_ctrl, display):
+    def __init__(self, audio_ctrl, display, rhythm_display):
         super(Player, self).__init__()
 
         self.audio_ctrl = audio_ctrl
         self.display = display
+        self.rhythm_display = rhythm_display
 
         self.our_turn = True
         self.complete = False

@@ -4,7 +4,7 @@ from imslib.gfxutil import CEllipse, CRectangle, CLabelRect
 from kivy.core.window import Window
 from training_display_components import GemDisplay, NowbarDisplay, nowbar_h, btn_h
 
-accuracy_window=120
+accuracy_window=100
 lane_h = .4
 lane_w_margin = 1/8
 max_x = (1 - lane_w_margin)
