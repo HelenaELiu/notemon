@@ -79,16 +79,19 @@ class NotemonSelectionBox(Screen):
     def __init__(self, name):
         super(NotemonSelectionBox, self).__init__(name)
         self.index = 0
+        self.selection = None
 
     def on_enter(self):
-        self.selection = [NotemonSelection(i, self.globals.database[i].name, self.globals.database[i].h) for i in range(tot_num)]
-        self.selection[self.index].select()
+        if self.selection is None:
+            self.selection = [NotemonSelection(i, self.globals.database[i].name, self.globals.database[i].h) for i in range(tot_num)]
+            self.selection[self.index].select()
 
         for s in self.selection:
             self.canvas.add(s)
 
     def on_exit(self):
-        self.selection[self.index].unselect()
+        for s in self.selection:
+            self.canvas.remove(s)
 
 
     def on_key_down(self, keycode, modifiers):
