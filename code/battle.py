@@ -196,7 +196,7 @@ class GameDisplay(InstructionGroup):
         self.opponent_name = opp.name
         self.opponent_skill = .3 # CHANGE
 
-        self.text = "You encountered " + self.opponent_name + "!"
+        self.update_label("You encountered " + self.opponent_name + "!")
 
         self.add(self.notemon_us)
         self.add(self.notemon_opponent)

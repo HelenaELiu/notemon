@@ -25,7 +25,7 @@ box_height = (1 - (tot_num - 1) * y_spacing - y_margin * 2) / tot_num #height of
 
 # Display for a single attack box
 class NotemonSelection(InstructionGroup):
-    def __init__(self, index, name):
+    def __init__(self, index, name, h=None):
         super(NotemonSelection, self).__init__()
         self.index = index
         self.name = name
@@ -33,7 +33,10 @@ class NotemonSelection(InstructionGroup):
         #graphics
         # colors = [0.1, 00.5, 0.7, 0.85]
         # self.color = Color(hsv=(colors[index], 1, 1))
-        self.color = Color(hsv=(index / tot_num, 1, 1))
+        if h == None:
+            self.color = Color(hsv=(index / tot_num, 1, 1))
+        else:
+            self.color = Color(hsv=(h, 1, 1))
         self.color.a = 0.7
         self.add(self.color)
 
@@ -75,8 +78,10 @@ def box_select(dir, curr_ind):
 class NotemonSelectionBox(Screen):
     def __init__(self, name):
         super(NotemonSelectionBox, self).__init__(name)
-        self.selection = [NotemonSelection(i, f"Notemon {i+1}") for i in range(tot_num)]
         self.index = 0
+
+    def on_enter(self):
+        self.selection = [NotemonSelection(i, self.globals.database[i].name, self.globals.database[i].h) for i in range(tot_num)]
         self.selection[self.index].select()
 
         for s in self.selection:

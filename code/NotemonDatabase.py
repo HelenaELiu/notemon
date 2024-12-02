@@ -7,7 +7,8 @@ class NotemonDatabase(object):
         self.names = ["melored", "meloyellow", "melorange", "melogreen", "meloblue", "melopurple"]
 
         #image sources
-        colors = ["red", "orange", "yellow", "green", "blue", "purple"]
+        colors = ["red", "yellow", "orange", "green", "blue", "purple"]
+        self.hs = [0/6, 1/6, 1/12, 2/6, 4/6, 5/6]
         self.img_srcs = []
 
         for color in colors:
@@ -35,6 +36,7 @@ class NotemonDatabase(object):
 class Notemon(object):
     def __init__(self, index, database):
         self.name = database.names[index]
+        self.h = database.hs[index]
         self.img_src = database.img_srcs[index]
         self.health = database.healths[self.name]
         self.attacks = [database.attack_database.get_attack_from_name(attack_name, False) for attack_name in database.attacks[self.name]]
