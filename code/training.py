@@ -106,9 +106,10 @@ class TrainingWidget(Screen):
     def scoring(self):
         # Get the training accuracy percentage
         training_percent = self.game_display[self.curr_attack_index].get_training_percent()
+        curr_acc = self.game_display[self.curr_attack_index].acc
 
         # Check if the training is mastered
-        if training_percent > 0.5 and not self.attacks[self.curr_attack_index].unlocked:
+        if training_percent > 0.5 and curr_acc > 0 and not self.attacks[self.curr_attack_index].unlocked:
             self.active_notemon.attacks_trained += 1
             self.attacks[self.curr_attack_index].unlocked = True
             return
@@ -131,15 +132,15 @@ class TrainingWidget(Screen):
 
         self.training = reduce(lambda tot,aud_ctrl: tot or aud_ctrl.training, self.audio_ctrl, False)
 
-        self.info.text = "Training Screen\n"
-        self.info.text += "-: switch main\n"
+        self.info.text = "Training Screen; '-' switches to main. ENTER to select attack.\n"
+        self.info.text += "To train an attack, unlock at least half the gems AND have accuracy > 0\n"
+        self.info.text += f'percent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\n'
+        self.info.text += f'accuracy of run: {self.game_display[self.curr_attack_index].acc}\n'
         # self.info.text = 'p: pause/unpause song\n'
         # self.info.text += f'song time: {now:.2f}\n'
-        self.info.text += f'index {self.curr_attack_index}\n'
-        self.info.text += f'attacks trained: {self.active_notemon.attacks_trained}\n'
-        self.info.text += f'num objects: {self.game_display[self.curr_attack_index].get_num_object()}\n'
-        self.info.text += f'accuracy of run: {self.game_display[self.curr_attack_index].acc}\n'
-        self.info.text += f'training percent: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%'
+        # self.info.text += f'index {self.curr_attack_index}\n'
+        self.info.text += f'number of attacks trained: {self.active_notemon.attacks_trained}\n'
+        # self.info.text += f'num objects: {self.game_display[self.curr_attack_index].get_num_object()}\n'
 
 class Player(object):
     def __init__(self, attack, audio_ctrl, display, defense=False):
