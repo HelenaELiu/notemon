@@ -76,14 +76,14 @@ class NowbarDisplay(InstructionGroup):
         return x <= max_x * Window.width and x >= min_x * Window.width
     
 class GemDisplay(InstructionGroup):
-    def __init__(self, lane, time, color, tick_to_xpos, attack):
+    def __init__(self, lane, time, color, tick_to_xpos, song_time, metro_time):
         super(GemDisplay, self).__init__()
 
         self.lane = lane
         self.time = time
         self.tick_to_xpos = tick_to_xpos
-        self.song_time = attack.song_time
-        self.metro_time = attack.metro_time
+        self.song_time = song_time
+        self.metro_time = metro_time
 
         self.x = tick_to_xpos(time)
         self.y = lane_h * Window.height

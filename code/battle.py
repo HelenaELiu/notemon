@@ -1,8 +1,9 @@
 import sys, os
 sys.path.insert(0, os.path.abspath('..'))
 
-from imslib.core import BaseWidget, run, lookup
-from imslib.audio import Audio
+from imslib.core import Widget, run, lookup
+from imslib.screen import Screen
+# from imslib.audio import Audio
 from imslib.mixer import Mixer
 from imslib.wavegen import WaveGenerator
 from imslib.wavesrc import WaveBuffer, WaveFile
@@ -36,47 +37,61 @@ defense_threshold = .9
 
 TIME_BETWEEN_ATTACKS = 960
 
-class MainWidget(BaseWidget):
-    def __init__(self, attacks):
-        super(MainWidget, self).__init__()
-        self.display = GameDisplay(attacks)
-        self.canvas.add(self.display)
+class MainWidget(Screen):
+    def __init__(self, name, audio, synth, sched):
+        super(MainWidget, self).__init__(name)
 
         # audio
-        self.audio = Audio(2)
-        self.synth = Synth()
-        self.tempo_map  = SimpleTempoMap(120)
-        self.sched = AudioScheduler(self.tempo_map)
+        self.audio = audio
+        self.synth = synth
+        # self.tempo_map  = SimpleTempoMap(120)
+        self.sched = sched
 
-        # connect scheduler into audio system
-        self.audio.set_generator(self.sched)
-        self.sched.set_generator(self.synth)
-        
-        self.player_attacks = attacks
-        self.player_audio_ctrl = [PlayerAudioController(self.synth, self.sched, attack, index, self.display.opponent_defense) for (index, attack) in enumerate(attacks)]
-
-        self.op_attacks = attack_database.get_attack_roster(2, is_op=True)
-        self.op_audio_ctrl = [OppAudioController(self.synth, self.sched, attack, index, self.player_defense_screen) for (index, attack) in enumerate(self.op_attacks)]
-        self.rhythm_display = [RhythmDisplay(attack) for attack in self.op_attacks]
-
-        self.player = Player(self.player_audio_ctrl, self.display)
+        # # connect scheduler into audio system
+        # self.audio.set_generator(self.sched)
+        # self.sched.set_generator(self.synth)
 
         self.info = topleft_label()
         self.add_widget(self.info)
 
         self.opp_box_played = None
-        self.player_defending = False
+        # self.player_defending = False
         self.gem_idx = 0
         self.tick = None
 
+    def on_enter(self):
+        self.active_notemon = self.globals.database[self.globals.pokemon_index]
+        self.player_attacks = self.globals.database[self.globals.pokemon_index].attacks
+
+        self.opp_index = random.randrange(6)
+        self.opp = self.globals.database[self.opp_index]
+
+        self.op_attacks = self.globals.database[self.opp_index].attacks
+        self.op_audio_ctrl = [OppAudioController(self.synth, self.sched, attack, index, self.player_defense_screen) for (index, attack) in enumerate(self.op_attacks)]
+        self.rhythm_display = [RhythmDisplay(attack) for attack in self.op_attacks]
+
+
+        self.display = GameDisplay(self.player_attacks, self.active_notemon, self.opp)
+        self.canvas.add(self.display)
+
+        self.player_audio_ctrl = [PlayerAudioController(self.synth, self.sched, attack, index, self.display.opponent_defense) for (index, attack) in enumerate(self.player_attacks)]
+        self.player = Player(self.player_audio_ctrl, self.display)
+
+    def on_exit(self):
+        self.canvas.remove(self.display)
+
     def on_key_down(self, keycode, modifiers):
-        if self.display.check_complete():
+        if keycode[1] == '-':
+            print('battleScreen prev')
+            self.switch_to('main')
+
+        if not self.display.invalid and self.display.check_complete():
             return
 
-        if keycode[1] in ["up", "down", "left", "right"]:
+        if not self.display.invalid and keycode[1] in ["up", "down", "left", "right"]:
             self.display.move(keycode[1])
 
-        if keycode[1] == 'enter':
+        if not self.display.invalid and keycode[1] == 'enter':
             box_played = self.player.on_button_enter()
 
             if box_played is not None:
@@ -84,7 +99,7 @@ class MainWidget(BaseWidget):
                 next_beat = quantize_tick_up(self.sched.get_tick(), kTicksPerQuarter) # this is when the above noteseqs start
                 self.sched.post_at_tick(self.attack_player, next_beat + self.player_attacks[box_played].song_time + TIME_BETWEEN_ATTACKS)
 
-        if keycode[1] == "spacebar" and self.player_defending:
+        if keycode[1] == "spacebar" and any([i.attacking for i in self.op_audio_ctrl]):
             # TODO play bass drum or something
             self.rhythm_display[self.opp_box_played].on_button_down()
             target_time, _ = self.op_attacks[self.opp_box_played].gems[self.gem_idx]
@@ -95,11 +110,11 @@ class MainWidget(BaseWidget):
 
     def on_key_up(self, keycode):
 
-        if keycode[1] == "spacebar" and self.player_defending:
+        if keycode[1] == "spacebar" and any([i.attacking for i in self.op_audio_ctrl]):
             self.rhythm_display[self.opp_box_played].on_button_up()
 
     def attack_player(self, tick):
-        weapon_select = random.randrange(3)
+        weapon_select = random.randrange(4)
         new_text = f"{self.display.opponent_name} is about to use {self.op_attacks[weapon_select].name} !\n"
         new_text += f"Listen carefully, and block as each note hits."
         self.display.update_label(new_text)
@@ -109,7 +124,7 @@ class MainWidget(BaseWidget):
     def player_defense_screen(self, tick, index):
         self.display.update_label("")
         self.gem_idx = 0
-        self.player_defending = True
+        # self.player_defending = True
 
         self.opp_box_played = index
         self.display.remove(self.display.box)
@@ -133,6 +148,9 @@ class MainWidget(BaseWidget):
         self.tick = None
 
     def on_update(self):
+        self.info.text = "Battle Screen\n"
+        self.info.text += "-: switch main\n"
+
         self.display.on_update()
         self.audio.on_update()
         if self.opp_box_played is not None:
@@ -144,26 +162,13 @@ class MainWidget(BaseWidget):
 
 # Displays all game elements: attack boxes, notemon sprites
 class GameDisplay(InstructionGroup):
-    def __init__(self, attacks):
+    def __init__(self, attacks, active_notemon, opp):
         super(GameDisplay, self).__init__()
+        self.invalid = False
 
         #attack boxes
         self.box = AttackBox(attacks, y_marg=y_margin)
         self.add(self.box)
-
-        self.current_box = 0
-        self.box.select(self.current_box)
-
-        #notemon sprites
-        self.us_img = "sprites/meloetta-green.png"
-        self.opponent_img = "sprites/meloetta-orange.png"
-        self.notemon_us = NotemonDisplay(100, False, self.us_img)
-        self.notemon_opponent = NotemonDisplay(100, True, self.opponent_img)
-        self.opponent_name = "melorange"
-        self.opponent_skill = .3 # CHANGE
-
-        self.add(self.notemon_us)
-        self.add(self.notemon_opponent)
 
         #battle log
         self.color = Color(1, 1, 1)
@@ -171,10 +176,31 @@ class GameDisplay(InstructionGroup):
 
         self.label_x = Window.width // 2
         self.label_y = (1 - 9 * y_margin) * Window.height
-        self.text = "You encountered " + self.opponent_name + "!"
+        self.text = ""
         self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = self.text)
-        
         self.add(self.label)
+
+        unlocked = [ind for ind, attack in enumerate(attacks) if attack.unlocked]
+        if len(unlocked) == 0:
+            self.invalid = True
+            self.update_label("You must train first! Go back to main screen.")
+            return
+        self.current_box = min(unlocked)
+        self.box.select(self.current_box)
+
+        #notemon sprites
+        self.us_img = active_notemon.img_src
+        self.opponent_img = opp.img_src
+        self.notemon_us = NotemonDisplay(100, False, self.us_img)
+        self.notemon_opponent = NotemonDisplay(100, True, self.opponent_img)
+        self.opponent_name = opp.name
+        self.opponent_skill = .3 # CHANGE
+
+        self.text = "You encountered " + self.opponent_name + "!"
+
+        self.add(self.notemon_us)
+        self.add(self.notemon_opponent)
+        
     
     def move(self, dir):
         self.box.move(dir, self.current_box)
@@ -216,8 +242,9 @@ class GameDisplay(InstructionGroup):
         return (self.notemon_opponent.fainted or self.notemon_us.fainted)
     
     def on_update(self):
-        self.notemon_opponent.on_update()
-        self.notemon_us.on_update()
+        if not self.invalid:
+            self.notemon_opponent.on_update()
+            self.notemon_us.on_update()
 
 # Handles game logic.
 # Controls the GameDisplay and AudioCtrl based on what happens
