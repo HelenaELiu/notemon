@@ -90,6 +90,12 @@ class MainWidget(Screen):
 
         if not self.display.invalid and keycode[1] in ["up", "down", "left", "right"]:
             self.display.move(keycode[1])
+        elif not self.display.invalid and keycode[1] in ('1234'):
+            new_ind = int(keycode[1]) - 1
+            if new_ind != self.display.current_box and self.display.box.attacks[new_ind].attack.unlocked:
+                self.display.box.unselect(self.display.current_box)
+                self.display.current_box = new_ind
+                self.display.box.select(self.display.current_box)
 
         if not self.display.invalid and keycode[1] == 'enter':
             box_played = self.player.on_button_enter()
@@ -203,7 +209,9 @@ class GameDisplay(InstructionGroup):
         
     
     def move(self, dir):
-        self.box.move(dir, self.current_box)
+        new_ind = self.box.move(dir, self.current_box)
+        if new_ind != self.current_box and self.box.attacks[new_ind].attack.unlocked:
+            self.current_box = new_ind
 
     def update_label(self, new_text):
         self.remove(self.label)

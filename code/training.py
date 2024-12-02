@@ -68,15 +68,24 @@ class TrainingWidget(Screen):
             self.switch_to('main')
 
         # only change selected attack if not actively training
-        if not self.training and keycode[1] in ('right', 'left', 'up', 'down'):
+        elif not self.training and keycode[1] in ('right', 'left', 'up', 'down'):
             new_ind = self.attack_box.move(keycode[1], self.curr_attack_index)
             if new_ind != self.curr_attack_index:
                 self.canvas.remove(self.game_display[self.curr_attack_index])
                 self.curr_attack_index = new_ind
                 self.canvas.add(self.game_display[self.curr_attack_index])
 
+        elif not self.training and keycode[1] in ('1234'):
+            new_ind = int(keycode[1]) - 1
+            if new_ind != self.curr_attack_index:
+                self.attack_box.attacks[self.curr_attack_index].unselect()
+                self.canvas.remove(self.game_display[self.curr_attack_index])
+                self.curr_attack_index = new_ind
+                self.canvas.add(self.game_display[self.curr_attack_index])
+                self.attack_box.attacks[self.curr_attack_index].select()
+
         # train the selected attack
-        if keycode[1] == "enter" and not self.training:
+        elif keycode[1] == "enter" and not self.training:
             self.audio_ctrl[self.curr_attack_index].play()
             self.player[self.curr_attack_index].done = False
 

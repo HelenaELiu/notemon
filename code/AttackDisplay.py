@@ -84,6 +84,9 @@ class AttackBox(InstructionGroup):
     def select(self, ind):
         self.attacks[ind].select()
 
+    def unselect(self, ind):
+        self.attacks[ind].unselect()
+
     def move(self, dir, curr_ind):
         new_ind = curr_ind
 
