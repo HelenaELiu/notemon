@@ -153,11 +153,11 @@ class MainScreen(Screen):
         self.info.text += "-: switch to battle\n"
 
 class trainingScreen(Screen):
-    def __init__(self, globals, **kwargs):
+    def __init__(self, attacks, **kwargs):
         super(trainingScreen, self).__init__(**kwargs)
         
         # Create an instance of TrainingWidget
-        self.training_widget = TrainingWidget(globals.attack_objects)
+        self.training_widget = TrainingWidget(attacks)
         
         # Add the TrainingWidget to the screen
         self.add_widget(self.training_widget)
@@ -182,11 +182,11 @@ class trainingScreen(Screen):
             self.training_widget.on_update()
 
 class battleScreen(Screen):
-    def __init__(self, globals, **kwargs):
+    def __init__(self, attacks, **kwargs):
         super(battleScreen, self).__init__(**kwargs)
 
         # Create an instance of MainWidget (battle)
-        self.battle_widget = MainWidget(globals.attack_objects)
+        self.battle_widget = MainWidget(attacks)
 
         # Add the MainWidget (battle) to the screen
         self.add_widget(self.battle_widget)

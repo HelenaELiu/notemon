@@ -109,3 +109,9 @@ class AttackBox(InstructionGroup):
             self.attacks[new_ind].select()
 
         return new_ind
+    
+    def get_name(self, ind):
+        return self.attacks[ind].attack.name
+
+    def get_damage(self, ind):
+        return self.attacks[ind].attack.damage

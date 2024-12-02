@@ -78,6 +78,7 @@ class TrainingWidget(BaseWidget):
             self.player[self.curr_attack_index].on_button_down(button_idx)
 
     def on_key_up(self, keycode):
+
         # button up
         button_idx = lookup(keycode[1], btns, (0,1,2,3,4,5,6,7))
         if button_idx != None:

@@ -27,7 +27,7 @@ class NotemonDisplay(InstructionGroup):
         super(NotemonDisplay, self).__init__()
 
         #set background color. this can be changed
-        Window.clearcolor = (0, 0, 1, 1)
+        Window.clearcolor = (0, 0, 0, 1)
 
         self.health = health
         self.opponent = opponent

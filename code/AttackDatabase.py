@@ -42,11 +42,11 @@ class AttackDatabase(object):
 
         self.lanes = {
             'winter': (60, 62, 63, 65, 67, 69, 71, 72),
-            'fifth symphony': (62, 63, 65, 67),
+            'fifth symphony': (60, 62, 63, 65, 67, 69, 71, 72),
             'fur elise': (69, 71, 72, 74, 75, 76, 77, 79),
             'magic flute': (60, 62, 63, 65, 67, 69, 70, 72),
-            'hello': (65, 68, 70),
-            'espresso': (55, 57, 59, 60, 62),
+            'hello': (58, 60, 61, 63, 65, 66, 68, 70),
+            'espresso': (55, 57, 59, 60, 62), # TODO THESE NEED TO HAVE 8
             'rolling in the deep': (67, 70, 72),
             'dynamite': (64, 66, 68, 69, 71, 73),
             'just the way you are': (65, 67, 69, 70),
@@ -84,6 +84,10 @@ class AttackDatabase(object):
             'fifth symphony': 40,
             'fur elise': 20,
             'magic flute': 30,
+            'hello': 10,
+            'espresso': 40,
+            'rolling in the deep': 20,
+            'dynamite': 30,
             }
 
     def index(self, index):
@@ -93,5 +97,5 @@ class AttackDatabase(object):
     def get_attack(self, index, unlocked):
         return Attack(self.index(index), self.metro_time, unlocked=unlocked)
 
-    def get_attack_roster(self, starting_index):
-        return [self.get_attack(i, i==0) for i in range(4)]
+    def get_attack_roster(self, starting_index, is_op=False):
+        return [self.get_attack(i+starting_index, i==0 or is_op) for i in range(4)]
