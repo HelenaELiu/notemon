@@ -90,7 +90,7 @@ class MainWidget(Screen):
 
         if not self.display.invalid and keycode[1] in ["up", "down", "left", "right"]:
             self.display.move(keycode[1])
-        elif not self.display.invalid and keycode[1] in ('1234'):
+        elif not self.display.invalid and keycode[1] in ('1234') and len(keycode[1]) > 0:
             new_ind = int(keycode[1]) - 1
             if new_ind != self.display.current_box and self.display.box.attacks[new_ind].attack.unlocked:
                 self.display.box.unselect(self.display.current_box)
@@ -102,6 +102,8 @@ class MainWidget(Screen):
 
             if box_played is not None:
                 # Schedule opponent attack
+                self.can_hit = True
+                self.rhythm_done = False
                 next_beat = quantize_tick_up(self.sched.get_tick(), kTicksPerQuarter) # this is when the above noteseqs start
                 self.sched.post_at_tick(self.attack_player, next_beat + self.player_attacks[box_played].song_time + TIME_BETWEEN_ATTACKS)
 
@@ -109,10 +111,17 @@ class MainWidget(Screen):
             # TODO play bass drum or something
             self.rhythm_display[self.opp_box_played].on_button_down()
             target_time, _ = self.op_attacks[self.opp_box_played].gems[self.gem_idx]
-            if abs(target_time - self.tick) < accuracy_window:
+            if target_time - self.tick <= accuracy_window and self.can_hit:
                 self.rhythm_display[self.opp_box_played].gem_hit(self.gem_idx)
-            if self.gem_idx < len(self.op_attacks[self.opp_box_played].gems) - 1:
-                self.gem_idx += 1
+                if self.gem_idx < len(self.op_attacks[self.opp_box_played].gems) - 1:
+                    self.gem_idx += 1
+                    self.can_hit = True
+                else:
+                    self.rhythm_done = True
+            elif target_time - self.tick > accuracy_window: 
+                # self.rhythm_display[self.opp_box_played].gem_pass(self.gem_idx)
+                self.rhythm_display[self.opp_box_played].gem_pass(self.gem_idx)
+                self.can_hit = False
 
     def on_key_up(self, keycode):
 
@@ -164,6 +173,16 @@ class MainWidget(Screen):
             self.rhythm_display[self.opp_box_played].on_update(now)
             self.tick = now
 
+        if any([i.attacking for i in self.op_audio_ctrl]):
+            target_time, _ = self.op_attacks[self.opp_box_played].gems[self.gem_idx]
+            if target_time + accuracy_window < self.tick and not self.rhythm_done:
+                self.rhythm_display[self.opp_box_played].gem_pass(self.gem_idx)
+                if self.gem_idx < len(self.op_attacks[self.opp_box_played].gems) - 1:
+                    self.gem_idx += 1
+                    self.can_hit = True
+                else:
+                    self.rhythm_done = True
+
         self.info.text = 'Let\'s Battle!\n'
 
 # Displays all game elements: attack boxes, notemon sprites
@@ -171,6 +190,7 @@ class GameDisplay(InstructionGroup):
     def __init__(self, attacks, active_notemon, opp):
         super(GameDisplay, self).__init__()
         self.invalid = False
+        self.opp = opp
 
         #attack boxes
         self.box = AttackBox(attacks, y_marg=y_margin)
@@ -233,6 +253,9 @@ class GameDisplay(InstructionGroup):
 
             if self.notemon_opponent.fainted:
                 new_text += "Opponent notemon fainted! You win :)"
+                if not self.opp.unlocked:
+                    new_text += f"\nYou gain {self.opp.name}!"
+                    self.opp.unlocked = True
         else:
             new_text = "Opponent successfully defended :("
 

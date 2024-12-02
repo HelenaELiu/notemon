@@ -25,10 +25,11 @@ box_height = (1 - (tot_num - 1) * y_spacing - y_margin * 2) / tot_num #height of
 
 # Display for a single attack box
 class NotemonSelection(InstructionGroup):
-    def __init__(self, index, name, h=None):
+    def __init__(self, index, notemon, h=None):
         super(NotemonSelection, self).__init__()
         self.index = index
-        self.name = name
+        self.name = notemon.name
+        self.notemon = notemon
 
         #graphics
         # colors = [0.1, 00.5, 0.7, 0.85]
@@ -47,30 +48,29 @@ class NotemonSelection(InstructionGroup):
         y = Window.height * (1 - (index + 1) * box_height - (index) * y_spacing - y_margin)
 
         self.box = Line(rectangle = (x, y, w, h), width = 3)
-        self.label = CLabelRect(cpos = (x + w // 2, y + h // 2), text = name)
+        self.label = CLabelRect(cpos = (x + w // 2, y + h // 2), text = self.name)
         
         self.add(self.box)
         self.add(self.label)
-        self.show = True
 
     #when considering this box for selection, make outline brighter and larger
-    def select(self):
-        if self.show:
+    def select(self, beginning=False):
+        if self.notemon.unlocked or beginning:
             self.color.a = 1
             self.box.width = 10
 
     #revert outline to normal
-    def unselect(self):
-        if self.show:
+    def unselect(self, beginning=False):
+        if self.notemon.unlocked or beginning:
             self.color.a = 0.7
             self.box.width = 3
 
-def box_select(dir, curr_ind):
+def box_select(dir, curr_ind, tot):
     if dir == "up":
         return max(curr_ind - 1, 0)
     
     elif dir == "down":
-        return min(curr_ind + 1, tot_num - 1)
+        return min(curr_ind + 1, tot - 1)
 
     return curr_ind
 
@@ -80,10 +80,16 @@ class NotemonSelectionBox(Screen):
         super(NotemonSelectionBox, self).__init__(name)
         self.index = 0
         self.selection = None
+        self.beginning = True
 
     def on_enter(self):
-        if self.selection is None:
-            self.selection = [NotemonSelection(i, self.globals.database[i].name, self.globals.database[i].h) for i in range(tot_num)]
+        self.index = 0
+
+        if self.beginning:
+            self.selection = [NotemonSelection(i, self.globals.database[i], self.globals.database[i].h) for i in range(tot_num)]
+            self.selection[self.index].select(True)
+        else:
+            self.selection = [NotemonSelection(i, self.globals.database[i], self.globals.database[i].h) for i in range(tot_num) if self.globals.database[i].unlocked]
             self.selection[self.index].select()
 
         for s in self.selection:
@@ -93,22 +99,27 @@ class NotemonSelectionBox(Screen):
         for s in self.selection:
             self.canvas.remove(s)
 
+        if self.beginning:
+            self.beginning = False
+
 
     def on_key_down(self, keycode, modifiers):
         if keycode[1] == "enter":
-            self.globals.pokemon_index = self.index
+            self.globals.pokemon_index = self.selection[self.index].index
+            if self.beginning:
+                self.globals.database[self.index].unlocked = True
             self.switch_to("main")
 
-        if keycode[1] in [str(i) for i in range(1,tot_num+1)]:
-            self.selection[self.index].unselect()
+        if keycode[1] in [str(i) for i in range(1,len(self.selection)+1)]:
+            self.selection[self.index].unselect(self.beginning)
             self.index = int(keycode[1]) - 1
-            self.selection[self.index].select()
+            self.selection[self.index].select(self.beginning)
         
-        ind = box_select(keycode[1], self.index)
+        ind = box_select(keycode[1], self.index, len(self.selection))
         if ind != None:
-            self.selection[self.index].unselect()
+            self.selection[self.index].unselect(self.beginning)
             self.index = ind
-            self.selection[self.index].select()
+            self.selection[self.index].select(self.beginning)
 
 
 

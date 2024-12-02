@@ -43,4 +43,5 @@ class Notemon(object):
         self.health = database.healths[self.name]
         self.attacks = [database.attack_database.get_attack_from_name(attack_name, False) for attack_name in database.attacks[self.name]]
         self.attacks_trained = 0
+        self.unlocked = False
 #notemon_database = NotemonDatabase()
