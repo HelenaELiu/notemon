@@ -37,7 +37,7 @@ class NotemonDisplay(InstructionGroup):
         
         if opponent:
             self.x = (1 - 2 * x_margin) * Window.width
-            self.y = (1 - 3 * y_margin) * Window.height
+            self.y = (1 - 4 * y_margin) * Window.height
         else:
             self.x = 2 * x_margin * Window.width
             self.y = (1 - 6 * y_margin) * Window.height
@@ -53,7 +53,7 @@ class NotemonDisplay(InstructionGroup):
         self.y -= img_size[1] / 2
 
         self.label_x = self.x + img_size[0] / 2
-        self.label_y = self.y - img_size[1] / 4
+        self.label_y = self.y + img_size[1] * 1.2
         
         self.notemon = Rectangle(texture = self.img, pos = (self.x, self.y), size = img_size)
         self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = "health: " + str(self.health))
