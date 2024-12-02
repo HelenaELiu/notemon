@@ -40,4 +40,5 @@ class Notemon(object):
         self.img_src = database.img_srcs[index]
         self.health = database.healths[self.name]
         self.attacks = [database.attack_database.get_attack_from_name(attack_name, False) for attack_name in database.attacks[self.name]]
+        self.attacks_trained = 0
 #notemon_database = NotemonDatabase()

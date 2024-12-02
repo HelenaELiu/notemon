@@ -76,7 +76,7 @@ class TrainingWidget(Screen):
                 self.canvas.add(self.game_display[self.curr_attack_index])
 
         # train the selected attack
-        if keycode[1] == "spacebar" and not self.training:
+        if keycode[1] == "enter" and not self.training:
             self.audio_ctrl[self.curr_attack_index].play()
             self.player[self.curr_attack_index].done = False
 
@@ -100,7 +100,7 @@ class TrainingWidget(Screen):
 
         # Check if the training is mastered
         if training_percent > 0.5 and not self.attacks[self.curr_attack_index].unlocked:
-            self.game_display[self.curr_attack_index].attacks_trained += 1
+            self.active_notemon.attacks_trained += 1
             self.attacks[self.curr_attack_index].unlocked = True
             return
 
@@ -127,7 +127,7 @@ class TrainingWidget(Screen):
         # self.info.text = 'p: pause/unpause song\n'
         # self.info.text += f'song time: {now:.2f}\n'
         self.info.text += f'index {self.curr_attack_index}\n'
-        self.info.text += f'attacks trained: {self.game_display[self.curr_attack_index].attacks_trained}\n'
+        self.info.text += f'attacks trained: {self.active_notemon.attacks_trained}\n'
         self.info.text += f'num objects: {self.game_display[self.curr_attack_index].get_num_object()}\n'
         self.info.text += f'accuracy of run: {self.game_display[self.curr_attack_index].acc}\n'
         self.info.text += f'training percent: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%'

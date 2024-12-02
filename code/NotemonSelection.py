@@ -87,6 +87,9 @@ class NotemonSelectionBox(Screen):
         for s in self.selection:
             self.canvas.add(s)
 
+    def on_exit(self):
+        self.selection[self.index].unselect()
+
 
     def on_key_down(self, keycode, modifiers):
         if keycode[1] == "enter":

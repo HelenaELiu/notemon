@@ -93,13 +93,17 @@ class AttackDatabase(object):
             'shape of you': 30,
             'the feels': 20
             }
+        
+        self.metro_times = {
+            'rolling in the deep': 480 * 3,
+        }
 
     def index(self, index):
         name = self.names[index]
         return {"name": name, "lanes": self.lanes[name], "notes": self.notes[name], "damage": self.damages[name], "key": self.keys[name]}
 
     def get_attack(self, index, unlocked):
-        return Attack(self.index(index), self.metro_time, unlocked=unlocked)
+        return Attack(self.index(index), self.metro_times[self.names[index]] if self.names[index] in self.metro_times else self.metro_time, unlocked=unlocked)
     
     def get_attack_from_name(self, name, unlocked):
         index = self.names.index(name)
