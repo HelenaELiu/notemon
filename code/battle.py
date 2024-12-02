@@ -70,6 +70,8 @@ class MainWidget(BaseWidget):
         self.tick = None
 
     def on_key_down(self, keycode, modifiers):
+        if self.display.check_complete():
+            return
 
         if keycode[1] in ["up", "down", "left", "right"]:
             self.display.move(keycode[1])
