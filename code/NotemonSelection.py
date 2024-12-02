@@ -14,7 +14,7 @@ from kivy.graphics import Color, Ellipse, Line, Rectangle
 from kivy.core.window import Window
 from imslib.gfxutil import topleft_label, resize_topleft_label, AnimGroup, KFAnim, CEllipse, CLabelRect
 
-tot_num = 6
+from NotemonDatabase import tot_num
 
 x_margin = 1/10 #distance from sides of boxes to edge of screen
 y_margin = 1/20 #distance from bottom of boxes to edge of screen
@@ -98,6 +98,11 @@ class NotemonSelectionBox(Screen):
         if keycode[1] == "enter":
             self.globals.pokemon_index = self.index
             self.switch_to("main")
+
+        if keycode[1] in [str(i) for i in range(1,tot_num+1)]:
+            self.selection[self.index].unselect()
+            self.index = int(keycode[1]) - 1
+            self.selection[self.index].select()
         
         ind = box_select(keycode[1], self.index)
         if ind != None:

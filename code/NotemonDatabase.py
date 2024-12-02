@@ -1,5 +1,7 @@
 from AttackDatabase import AttackDatabase
 
+tot_num = 6
+
 class NotemonDatabase(object):
     def __init__(self):
         #names
