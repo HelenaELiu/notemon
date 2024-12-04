@@ -63,8 +63,11 @@ class MainWidget(Screen):
         self.active_notemon = self.globals.database[self.globals.pokemon_index]
         self.player_attacks = self.globals.database[self.globals.pokemon_index].attacks
 
-        self.opp_index = random.randrange(6)
+        self.opp_index = 5 #random.randrange(6)
         self.opp = self.globals.database[self.opp_index]
+
+        self.direction_enable = self.opp.direction_enable
+        self.defendable_keys = set(['spacebar']) if not self.direction_enable else set(['up', 'down', 'spacebar'])
 
         self.op_attacks = self.globals.database[self.opp_index].attacks
         self.op_audio_ctrl = [OppAudioController(self.synth, self.sched, attack, index, self.player_defense_screen) for (index, attack) in enumerate(self.op_attacks)]
@@ -107,11 +110,15 @@ class MainWidget(Screen):
                 next_beat = quantize_tick_up(self.sched.get_tick(), kTicksPerQuarter) # this is when the above noteseqs start
                 self.sched.post_at_tick(self.attack_player, next_beat + self.player_attacks[box_played].song_time + TIME_BETWEEN_ATTACKS)
 
-        if keycode[1] == "spacebar" and any([i.attacking for i in self.op_audio_ctrl]):
-            # TODO play bass drum or something
+        if keycode[1] in self.defendable_keys and any([i.attacking for i in self.op_audio_ctrl]):
             self.rhythm_display[self.opp_box_played].on_button_down()
             target_time, _ = self.op_attacks[self.opp_box_played].gems[self.gem_idx]
-            if target_time - self.tick <= accuracy_window and self.can_hit:
+
+            hit_condition = (target_time - self.tick <= accuracy_window) and self.can_hit
+            if self.direction_enable:
+                hit_condition = hit_condition and (keycode[1] == self.op_attacks[self.opp_box_played].gem_directions[self.gem_idx])
+
+            if hit_condition:
                 self.rhythm_display[self.opp_box_played].gem_hit(self.gem_idx)
                 if self.gem_idx < len(self.op_attacks[self.opp_box_played].gems) - 1:
                     self.gem_idx += 1
@@ -220,7 +227,7 @@ class GameDisplay(InstructionGroup):
         self.notemon_us = NotemonDisplay(100, False, self.us_img)
         self.notemon_opponent = NotemonDisplay(100, True, self.opponent_img)
         self.opponent_name = opp.name
-        self.opponent_skill = .3 # CHANGE
+        self.opponent_skill = opp.skill
 
         self.update_label("You encountered " + self.opponent_name + "!")
 

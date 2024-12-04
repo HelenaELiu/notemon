@@ -29,6 +29,8 @@ class Attack:
             tot += gem[0]
         self.gems = gems
 
+        self.gem_directions = ['spacebar'] + ['up' if self.notes[i][1] > self.notes[i-1][1] else 'down' if self.notes[i][1] < self.notes[i-1][1] else 'spacebar' for i in range(1, len(self.notes))]
+
         # self.gem_displays = [GemDisplay(lane, time, (1/8 * (lane),1,1), self.song_time, metro_time) for time,lane in gems]
         self.game_display = GameDisplay(gems, self.song_time, metro_time)
 

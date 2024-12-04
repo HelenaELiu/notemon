@@ -24,6 +24,20 @@ class NotemonDatabase(object):
                         "meloblue": 180,
                         "melopurple": 200,}
 
+        self.skills = {"melored": .3,
+                        "meloyellow": .3,
+                        "melorange": .4,
+                        "melogreen": .3,
+                        "meloblue": .3,
+                        "melopurple": .4,}
+
+        self.direction_enable = {"melored": False,
+                        "meloyellow": False,
+                        "melorange": False,
+                        "melogreen": True,
+                        "meloblue": True,
+                        "melopurple": True,}
+
         #attacks
         self.attacks = {"melored": ["winter", "magic flute", "rolling in the deep", "the feels"],
                         "meloyellow": ["fifth symphony", "fur elise", "hello", "shape of you"],
@@ -41,6 +55,8 @@ class Notemon(object):
         self.h = database.hs[index]
         self.img_src = database.img_srcs[index]
         self.health = database.healths[self.name]
+        self.skill = database.skills[self.name]
+        self.direction_enable = database.direction_enable[self.name]
         self.attacks = [database.attack_database.get_attack_from_name(attack_name, False) for attack_name in database.attacks[self.name]]
         self.attacks_trained = 0
         self.unlocked = False
