@@ -59,11 +59,14 @@ class MainWidget(Screen):
         self.gem_idx = 0
         self.tick = None
 
+        self.rhythm_display = None
+        self.display = None
+
     def on_enter(self):
         self.active_notemon = self.globals.database[self.globals.pokemon_index]
         self.player_attacks = self.globals.database[self.globals.pokemon_index].attacks
 
-        self.opp_index = 5 #random.randrange(6)
+        self.opp_index = random.randrange(6)
         self.opp = self.globals.database[self.opp_index]
 
         self.direction_enable = self.opp.direction_enable
@@ -79,6 +82,8 @@ class MainWidget(Screen):
 
         self.player_audio_ctrl = [PlayerAudioController(self.synth, self.sched, attack, index, self.display.opponent_defense) for (index, attack) in enumerate(self.player_attacks)]
         self.player = Player(self.player_audio_ctrl, self.display, self.rhythm_display)
+
+        self.on_resize((Window.width, Window.height))
 
     def on_exit(self):
         self.canvas.remove(self.display)
@@ -171,6 +176,14 @@ class MainWidget(Screen):
 
     def on_update(self):
         self.info.text = "Battle Screen\n"
+        if self.direction_enable:
+            self.info.text += "Defend by: \n"
+            self.info.text += "Pressing up as the pitch goes up,\n"
+            self.info.text += "down as the pitch goes down,\n"
+            self.info.text += "and space otherwise!\n"
+            self.info.text += "And do it all in time with their attack!\n"
+        else:
+            self.info.text += "Defend by pressing space in time with the attack!\n"
         self.info.text += "-: switch main\n"
 
         self.display.on_update()
@@ -190,7 +203,13 @@ class MainWidget(Screen):
                 else:
                     self.rhythm_done = True
 
-        self.info.text = 'Let\'s Battle!\n'
+    def on_resize(self, win_size):
+        if self.rhythm_display:
+            for rd in self.rhythm_display:
+                rd.on_resize(win_size)
+        if self.display:
+            self.display.on_resize(win_size)
+        resize_topleft_label(self.info)
 
 # Displays all game elements: attack boxes, notemon sprites
 class GameDisplay(InstructionGroup):
@@ -278,6 +297,16 @@ class GameDisplay(InstructionGroup):
     
     def check_complete(self):
         return (self.notemon_opponent.fainted or self.notemon_us.fainted)
+
+    def on_resize(self, win_size):
+        if not self.invalid:
+            self.notemon_opponent.on_resize(win_size)
+            self.notemon_us.on_resize(win_size)
+            self.box.on_resize(win_size)
+
+            self.label_x = Window.width // 2
+            self.label_y = (1 - 9 * y_margin) * Window.height
+            self.label.cpos = (self.label_x, self.label_y)
     
     def on_update(self):
         if not self.invalid:

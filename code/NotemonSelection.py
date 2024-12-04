@@ -30,6 +30,7 @@ class NotemonSelection(InstructionGroup):
         self.index = index
         self.name = notemon.name
         self.notemon = notemon
+        self.selected = False
 
         #graphics
         # colors = [0.1, 00.5, 0.7, 0.85]
@@ -58,12 +59,33 @@ class NotemonSelection(InstructionGroup):
         if self.notemon.unlocked or beginning:
             self.color.a = 1
             self.box.width = 10
+            self.selected = True
 
     #revert outline to normal
     def unselect(self, beginning=False):
         if self.notemon.unlocked or beginning:
             self.color.a = 0.7
             self.box.width = 3
+            self.selected = False
+
+    def on_resize(self, win_size, beginning):
+        if self.notemon.unlocked or beginning:
+            self.remove(self.box)
+            self.remove(self.label)
+
+            w = box_width * Window.width
+            h = box_height * Window.height
+
+            x = 1/2 * Window.width - 1/2 * box_width * Window.width
+            y = Window.height * (1 - (self.index + 1) * box_height - (self.index) * y_spacing - y_margin)
+
+            self.box = Line(rectangle = (x, y, w, h), width = 3)
+            self.label = CLabelRect(cpos = (x + w // 2, y + h // 2), text = self.name)
+            if self.selected:
+                self.select(beginning)
+            
+            self.add(self.box)
+            self.add(self.label)
 
 def box_select(dir, curr_ind, tot):
     if dir == "up":
@@ -121,7 +143,12 @@ class NotemonSelectionBox(Screen):
             self.index = ind
             self.selection[self.index].select(self.beginning)
 
+    def on_resize(self, win_size):
+        if self.selection:
+            for s in self.selection:
+                s.on_resize(win_size, self.beginning)
+
 
 
 # if __name__ == "__main__":
-#     run(TestWidget())
+#     run(TestWidget()

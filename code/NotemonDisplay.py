@@ -20,6 +20,7 @@ y_margin = 1/20 #distance from bottom of boxes to edge of screen
 box_width = 7/20 #width of boxes
 box_height = 1/6 #height of boxes
 radius_margin = 1/16 #radius of notemon circles
+img_size = (140, 230)
 
 # Display for a single notemon sprite
 class NotemonDisplay(InstructionGroup):
@@ -48,7 +49,6 @@ class NotemonDisplay(InstructionGroup):
         if opponent:
             self.img.flip_horizontal()
         
-        img_size = (140, 230)
         self.x -= img_size[0] / 2
         self.y -= img_size[1] / 2
 
@@ -68,6 +68,23 @@ class NotemonDisplay(InstructionGroup):
             self.fainted = True
         else:
             self.health -= damage
+
+    def on_resize(self, win_size):
+        if self.opponent:
+            self.x = (1 - 2 * x_margin) * Window.width
+            self.y = (1 - 4 * y_margin) * Window.height
+        else:
+            self.x = 2 * x_margin * Window.width
+            self.y = (1 - 6 * y_margin) * Window.height
+        self.x -= img_size[0] / 2
+        self.y -= img_size[1] / 2
+
+        self.notemon.pos = (self.x, self.y)
+
+        self.label_x = self.x + img_size[0] / 2
+        self.label_y = self.y + img_size[1] * 1.2
+
+        self.label.cpos = (self.label_x, self.label_y)
     
     def on_update(self):
         self.remove(self.label)

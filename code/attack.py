@@ -131,6 +131,8 @@ class GameDisplay(InstructionGroup):
             g.on_resize(win_size)
         for button in self.buttons:
             button.on_resize(win_size)
+        self.listen.cpos = (Window.width//2, Window.height//2)
+        self.play.cpos = (Window.width//2, Window.height//2)
 
 
     # call every frame to handle animation needs

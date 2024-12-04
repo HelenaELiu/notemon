@@ -165,6 +165,12 @@ class MainScreen(Screen):
         self.info.text += "=: switch to training\n"
         self.info.text += "-: switch to battle\n"
 
+    def on_resize(self, win_size):
+        resize_topleft_label(self.info)
+        self.button1.pos = (Window.width * .25, Window.height/2)
+        self.button2.pos = (Window.width * .45, Window.height/2)
+        self.button3.pos = (Window.width * .65, Window.height/2)
+
 # class trainingScreen(Screen):
 #     def __init__(self, attacks, **kwargs):
 #         super(trainingScreen, self).__init__(**kwargs)

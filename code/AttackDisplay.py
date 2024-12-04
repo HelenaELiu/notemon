@@ -27,6 +27,7 @@ class AttackDisplay(InstructionGroup):
         self.index = index
         self.training = training
         self.y_margin = y_marg
+        self.selected = False
 
         #opponents attacks are not shown, only ours are
         if training or self.attack.unlocked:
@@ -66,12 +67,46 @@ class AttackDisplay(InstructionGroup):
         if self.training or self.attack.unlocked:
             self.color.a = 1
             self.box.width = 10
+            self.selected = True
 
     #revert outline to normal
     def unselect(self):
         if self.training or self.attack.unlocked:
             self.color.a = 0.7
             self.box.width = 3
+            self.selected = False
+
+    def on_resize(self, win_size):
+        if self.training or self.attack.unlocked:
+            self.remove(self.box)
+            self.remove(self.label)
+            w = box_width * Window.width
+            h = box_height * Window.height
+
+            x1 = x_margin * Window.width
+            y1 = self.y_margin * Window.height + y_spacing * Window.height + h
+
+            x2 = (1 - x_margin) * Window.width - w
+            y2 = self.y_margin * Window.height
+
+            if self.index == 0:
+                self.box = Line(rectangle = (x1, y1, w, h), width = 3)
+                self.label = CLabelRect(cpos = (x1 + w // 2, y1 + h // 2), text = self.attack.name)
+            elif self.index == 1:
+                self.box = Line(rectangle = (x2, y1, w, h), width = 3)
+                self.label = CLabelRect(cpos = (x2 + w // 2, y1 + h // 2), text = self.attack.name)
+            elif self.index == 2:
+                self.box = Line(rectangle = (x1, y2, w, h), width = 3)
+                self.label = CLabelRect(cpos = (x1 + w // 2, y2 + h // 2), text = self.attack.name)
+            elif self.index == 3:
+                self.box = Line(rectangle = (x2, y2, w, h), width = 3)
+                self.label = CLabelRect(cpos = (x2 + w // 2, y2 + h // 2), text = self.attack.name)
+
+            if self.selected:
+                self.select()
+
+            self.add(self.box)
+            self.add(self.label)
 
 class AttackBox(InstructionGroup):
     def __init__(self, attacks, training=False, y_marg=y_margin):
@@ -117,3 +152,7 @@ class AttackBox(InstructionGroup):
 
     def get_damage(self, ind):
         return self.attacks[ind].attack.damage
+
+    def on_resize(self, win_size):
+        for attack in self.attacks:
+            attack.on_resize(win_size)

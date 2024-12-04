@@ -1,14 +1,18 @@
 from kivy.graphics.instructions import InstructionGroup
 from kivy.graphics import Color, Ellipse, Line, Rectangle
-from imslib.gfxutil import CEllipse, CRectangle, CLabelRect
+from imslib.gfxutil import CEllipse, CRectangle, CLabelRect, KFAnim
+from imslib.clock import SimpleTempoMap
 from kivy.core.window import Window
 from training_display_components import GemDisplay, NowbarDisplay, nowbar_h, btn_h
+import NotemonDisplay
 
 accuracy_window=100
-lane_h = .4
-lane_w_margin = 1/8
+lane_h = (1 - 4 * NotemonDisplay.y_margin)
+lane_w_margin = 3*NotemonDisplay.x_margin
 max_x = (1 - lane_w_margin)
 min_x = lane_w_margin
+
+tempo_map = SimpleTempoMap(120)
 
 class GemDisplay(InstructionGroup):
     def __init__(self, time, tick_to_xpos, attack):
@@ -35,11 +39,18 @@ class GemDisplay(InstructionGroup):
         # hit gem stays hit; only need to unlock once
         self.hit = False
 
+        self.time_seconds = tempo_map.tick_to_time(self.time)
+        self.hit_anim = KFAnim((self.time_seconds, size, size), (self.time_seconds + .083, size*2, size*2), (self.time_seconds + .167, size/2, size/2), (self.time_seconds+.25, size, size))
+
+        self.debug_print = False
+
     # change to display this gem being hit
     def on_hit(self):
         # TODO add animation
         self.color.hsv = self.hit_hsv
         self.hit = True
+        self.debug_print = True
+        print(self.time_seconds)
             
     # change to display a passed or missed gem
     def on_pass(self):
@@ -47,17 +58,23 @@ class GemDisplay(InstructionGroup):
 
     # animate gem (position and animation) based on current time
     def on_update(self, now_time):
+        if self.hit:
+            self.gem.csize = self.hit_anim.eval(tempo_map.tick_to_time(now_time))
+            if self.debug_print:
+                print(tempo_map.tick_to_time(now_time))
+            self.debug_print = False
         # reset color after the song in case it is not hit
         if now_time > (self.song_time + self.metro_time):
             self.color.hsv = (1,0,1)
         return now_time > 0 and now_time <= (self.song_time + self.metro_time)
     
     def on_resize(self, win_size):
-        self.y = lane_h * Window.height
+        self.y = lane_h * win_size[1]
         self.x = self.tick_to_xpos(self.time)
         size = Window.width * (max_x - min_x) / (self.song_time + self.metro_time) * accuracy_window
         self.gem.cpos = (self.x, self.y)
         self.gem.csize = (size, size)
+        self.hit_anim = KFAnim((self.time_seconds, size, size), (self.time_seconds + .33, size*2, size*2), (self.time_seconds + .67, size/2, size/2), (self.time_seconds+1, size, size))
 
 class NowbarDisplay(InstructionGroup):
     def __init__(self, tick_to_xpos):
@@ -92,8 +109,11 @@ class ButtonDisplay(InstructionGroup):
         self.add(self.button)
 
         self.add(Color(hsv=(1,0,1))) # label is white, don't really need to save bc it doesn't change
-        self.label = CLabelRect(cpos=(self.x, btn_h * Window.height), text="Press space to block!")
+        self.label = CLabelRect(cpos=(self.x, btn_h * Window.height), text="Block!")
         self.add(self.label)
+
+        # Reconfigure button to contain up/down information
+        self.dual_mode = False
 
     # displays when button is pressed down
     def on_down(self):
@@ -105,13 +125,13 @@ class ButtonDisplay(InstructionGroup):
 
     # modify object positions based on new window size
     def on_resize(self, win_size):
-        self.x = Window.width // 2
-        self.width = Window.width // 3
-        self.height = Window.height // 5
+        self.x = win_size[0] // 2
+        self.width = win_size[0] // 3
+        self.height = win_size[1] // 5
 
         self.button.csize = (self.width, self.height)
-        self.button.cpos=(self.x, btn_h * Window.height)
-        self.label.cpos = (self.x, btn_h * Window.height)
+        self.button.cpos=(self.x, btn_h * win_size[1])
+        self.label.cpos = (self.x, btn_h * win_size[1])
 
 class RhythmDisplay(InstructionGroup):
     def __init__(self, attack):
@@ -167,11 +187,10 @@ class RhythmDisplay(InstructionGroup):
 
     # for when the window size changes
     def on_resize(self, win_size):
-        self.lane.points=(lane_w_margin * Window.width, lane_h * Window.height, (1 - lane_w_margin) * Window.width, lane_h * Window.height)
+        self.lane.points=(lane_w_margin * win_size[0], lane_h * win_size[1], (1 - lane_w_margin) * win_size[0], lane_h * win_size[1])
         for g in self.gems:
             g.on_resize(win_size)
-        for button in self.buttons:
-            button.on_resize(win_size)
+            self.button.on_resize(win_size)
 
     # call every frame to handle animation needs
     def on_update(self, now_tick):

@@ -10,7 +10,8 @@ from imslib.screen import Screen
 # from imslib.noteseq import NoteSequencer
 from imslib.synth import Synth
 from imslib.clock import SimpleTempoMap, AudioScheduler
-from imslib.gfxutil import topleft_label
+from kivy.core.window import Window
+from imslib.gfxutil import topleft_label, resize_topleft_label
 from functools import reduce
 
 from attack import Attack
@@ -38,6 +39,7 @@ class TrainingWidget(Screen):
 
         # change this to make the attacks not all just winter haha
         self.game_display = None
+        self.attack_box = None
 
         self.info = topleft_label()
         self.add_widget(self.info)
@@ -57,6 +59,8 @@ class TrainingWidget(Screen):
         self.attack_box.select(self.curr_attack_index) # display attack as selected in the selector
         self.canvas.add(self.game_display[self.curr_attack_index]) # display current attack
         self.training = False
+
+        self.on_resize((Window.width, Window.height))
 
     def on_exit(self):
         self.canvas.remove(self.attack_box)
@@ -120,6 +124,9 @@ class TrainingWidget(Screen):
         if self.game_display:
             for gd in self.game_display:
                 gd.on_resize(win_size)
+        if self.attack_box:
+            self.attack_box.on_resize(win_size)
+        resize_topleft_label(self.info)
 
     def on_update(self):
         self.audio.on_update() # used to be # self.audio_ctrl.on_update()
