@@ -16,6 +16,7 @@ from imslib.gfxutil import topleft_label, resize_topleft_label, AnimGroup, KFAni
 from imslib.clock import Clock, SimpleTempoMap, AudioScheduler, tick_str, kTicksPerQuarter, quantize_tick_up
 from imslib.synth import Synth
 import random
+from kivy.uix.image import Image
 
 from battle_aud_ctrl import PlayerAudioController, OppAudioController
 from AttackDisplay import AttackDisplay, AttackBox
@@ -40,6 +41,18 @@ TIME_BETWEEN_ATTACKS = 960
 class MainWidget(Screen):
     def __init__(self, name, audio, synth, sched):
         super(MainWidget, self).__init__(name)
+
+        # Add the background image
+        self.background = Image(
+            source='battle.jpg',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
 
         # audio
         self.audio = audio
@@ -204,6 +217,7 @@ class MainWidget(Screen):
                     self.rhythm_done = True
 
     def on_resize(self, win_size):
+        self.background.size = win_size
         if self.rhythm_display:
             for rd in self.rhythm_display:
                 rd.on_resize(win_size)

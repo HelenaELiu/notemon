@@ -13,6 +13,7 @@ from kivy.graphics.instructions import InstructionGroup
 from kivy.graphics import Color, Ellipse, Line, Rectangle
 from kivy.core.window import Window
 from imslib.gfxutil import topleft_label, resize_topleft_label, AnimGroup, KFAnim, CEllipse, CLabelRect
+from kivy.uix.image import Image
 
 from NotemonDatabase import tot_num
 
@@ -104,6 +105,18 @@ class NotemonSelectionBox(Screen):
         self.selection = None
         self.beginning = True
 
+        # Add the background image
+        self.background = Image(
+            source='selection.png',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
+
     def on_enter(self):
         self.index = 0
 
@@ -144,6 +157,7 @@ class NotemonSelectionBox(Screen):
             self.selection[self.index].select(self.beginning)
 
     def on_resize(self, win_size):
+        self.background.size = win_size
         if self.selection:
             for s in self.selection:
                 s.on_resize(win_size, self.beginning)

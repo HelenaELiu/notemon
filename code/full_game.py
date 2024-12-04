@@ -17,6 +17,7 @@ from kivy.core.window import Window
 from kivy.clock import Clock as kivyClock
 from kivy.uix.button import Button
 from kivy import metrics
+from kivy.uix.image import Image
 
 from training import TrainingWidget
 from battle import MainWidget
@@ -132,6 +133,18 @@ class MainScreen(Screen):
     def __init__(self, **kwargs):
         super(MainScreen, self).__init__(**kwargs)
 
+        # Add the background image
+        self.background = Image(
+            source='background.jpg',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
+
         self.info = topleft_label()
         self.add_widget(self.info)
 
@@ -167,6 +180,7 @@ class MainScreen(Screen):
 
     def on_resize(self, win_size):
         resize_topleft_label(self.info)
+        self.background.size = win_size
         self.button1.pos = (Window.width * .25, Window.height/2)
         self.button2.pos = (Window.width * .45, Window.height/2)
         self.button3.pos = (Window.width * .65, Window.height/2)

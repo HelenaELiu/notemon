@@ -14,6 +14,8 @@ from kivy.core.window import Window
 from imslib.gfxutil import topleft_label, resize_topleft_label
 from functools import reduce
 
+from kivy.uix.image import Image
+
 from attack import Attack
 from training_aud_ctrl import TrainingAudioController
 from AttackDisplay import AttackDisplay, AttackBox
@@ -40,6 +42,18 @@ class TrainingWidget(Screen):
         # change this to make the attacks not all just winter haha
         self.game_display = None
         self.attack_box = None
+
+        # Add the background image
+        self.background = Image(
+            source='training.jpg',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
 
         self.info = topleft_label()
         self.add_widget(self.info)
@@ -121,6 +135,7 @@ class TrainingWidget(Screen):
     # handle changing displayed elements when window size changes
     # This function should call GameDisplay.on_resize
     def on_resize(self, win_size):
+        self.background.size = win_size
         if self.game_display:
             for gd in self.game_display:
                 gd.on_resize(win_size)
