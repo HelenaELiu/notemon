@@ -15,6 +15,8 @@ from imslib.gfxutil import topleft_label, resize_topleft_label
 from functools import reduce
 
 from kivy.uix.image import Image
+from kivy.uix.button import Button
+from kivy import metrics
 
 from attack import Attack
 from training_aud_ctrl import TrainingAudioController
@@ -23,6 +25,9 @@ from training_display_components import btns, accuracy_window
 from AttackDatabase import AttackDatabase
 
 y_margin = 0.3 #distance from bottom of boxes to edge of screen
+meloetta_dict = {0: 'meloetta_red', 1: 'meloetta_orange', 2: 'meloetta_yellow', 3: 'meloetta_green', 4: 'meloetta_blue', 5: 'meloetta_purple'}
+font_sz = metrics.dp(15)
+button_sz = (metrics.dp(400), metrics.dp(120))
 
 class TrainingWidget(Screen):
     def __init__(self, name, audio, synth, sched):
@@ -45,20 +50,37 @@ class TrainingWidget(Screen):
 
         # Add the background image
         self.background = Image(
-            source='training.jpg',  # Replace with the path to your image
+            source='training1.png',  # Replace with the path to your image
             allow_stretch=True,       # Allow the image to stretch to fill the screen
             keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
         )
         self.background.size = Window.size
         self.background.size_hint = (None, None)  # Disable size hinting
         self.background.pos = (0, 0)  # Position the image at the bottom-left corner
-
         self.add_widget(self.background)
 
-        self.info = topleft_label()
-        self.add_widget(self.info)
+        self.button1 = Button(text='Hi, I am Meloetta. \nHere you can train for battle.\nPress "=" to continue.', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.3, Window.height*0.9), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button1.bind(on_release= lambda x: self.switch_to('Notemon_orange'))
+        self.add_widget(self.button1)
+
+        self.notemon = Image()
+        self.chatbox = Image()
+        self.battle_unlocked = False
+        # self.info = topleft_label()
+        # self.add_widget(self.info)
 
     def on_enter(self):
+        if self.globals.pokemon_counter[self.globals.pokemon_index] == 0:
+                self.button1.text = "Hi, I am Meloetta. \nHere you can train for battle.\nPress '=' to continue."
+        elif self.globals.pokemon_counter[self.globals.pokemon_index] == 1:
+                self.button1.text = "Press '-' to pick a different color notemon. \nPress '=' to continue."
+        elif self.globals.pokemon_counter[self.globals.pokemon_index] == 2:
+            self.button1.text = "To train an attack, unlock at least \nhalf the gems AND have accuracy > 0. \nPress '=' to continue."
+        elif self.globals.pokemon_counter[self.globals.pokemon_index] == 3:
+            self.button1.text = "Press ENTER to select an attack. \nPress '=' to continue."
+        else:
+            self.button1.text = f"percent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\naccuracy of run: {self.game_display[self.curr_attack_index].acc}\nnumber of attacks trained: {self.active_notemon.attacks_trained}\n" 
+
         self.active_notemon = self.globals.database[self.globals.pokemon_index]
         self.attacks = self.globals.database[self.globals.pokemon_index].attacks
 
@@ -74,6 +96,28 @@ class TrainingWidget(Screen):
         self.canvas.add(self.game_display[self.curr_attack_index]) # display current attack
         self.training = False
 
+        self.notemon = Image(
+            source=f'{meloetta_dict[self.globals.pokemon_index]}.png',      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        
+        self.notemon.pos = (Window.width*0.01, Window.height*0.8)
+        self.add_widget(self.notemon)
+
+        self.chatbox = Image(
+            source='chatbox1.png',      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(800, 600)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        
+        self.chatbox.pos = (Window.width*0.1, Window.height*0.67)
+        self.add_widget(self.chatbox)
+
         self.on_resize((Window.width, Window.height))
 
     def on_exit(self):
@@ -81,6 +125,24 @@ class TrainingWidget(Screen):
         self.canvas.remove(self.game_display[self.curr_attack_index])
 
     def on_key_down(self, keycode, modifiers):
+        if keycode[1] == '=':
+            print(self.globals.pokemon_counter)
+
+            # Update button text based on the press count
+            
+            self.globals.pokemon_counter[self.globals.pokemon_index] += 1  # Increment the counter
+
+            if self.globals.pokemon_counter[self.globals.pokemon_index] == 1:
+                self.button1.text = "Press '-' to pick a different color notemon. \nPress '=' to continue."
+            elif self.globals.pokemon_counter[self.globals.pokemon_index] == 2:
+                self.button1.text = "To train an attack, unlock at least \nhalf the gems AND have accuracy > 0. \nPress '=' to continue."
+            elif self.globals.pokemon_counter[self.globals.pokemon_index] == 3:
+                self.button1.text = "Use the arrow keys to choose an attack. \nPress '=' to continue."
+            else:
+                self.button1.text = f"Press ENTER to select the attack. \nPercent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\nAccuracy of run: {self.game_display[self.curr_attack_index].acc}" 
+
+# Number of attacks trained: {self.active_notemon.attacks_trained}\n
+
         if keycode[1] == '-':
             print('trainingScreen prev')
             self.switch_to(self.globals.pokemon_dict[self.globals.pokemon_index])
@@ -112,9 +174,9 @@ class TrainingWidget(Screen):
         if button_idx != None:
             # print('down', button_idx)
             self.player[self.curr_attack_index].on_button_down(button_idx)
+        
 
     def on_key_up(self, keycode):
-
         # button up
         button_idx = lookup(keycode[1], btns, (0,1,2,3,4,5,6,7))
         if button_idx != None:
@@ -130,18 +192,39 @@ class TrainingWidget(Screen):
         if training_percent > 0.5 and curr_acc > 0 and not self.attacks[self.curr_attack_index].unlocked:
             self.active_notemon.attacks_trained += 1
             self.attacks[self.curr_attack_index].unlocked = True
+            self.button2 = Button(text='Click to go to Battle', font_size=font_sz, size = (button_sz[1], button_sz[1]), pos = (Window.width * .8, Window.height*.8))
+            self.button2.bind(on_release= lambda x: self.switch_to('battle'))
+            self.add_widget(self.button2)
+            self.battle_unlocked = True
             return
 
     # handle changing displayed elements when window size changes
     # This function should call GameDisplay.on_resize
     def on_resize(self, win_size):
         self.background.size = win_size
+        self.notemon.pos = (win_size[0]*0.01, win_size[1]*0.8)
+        self.notemon.size = (win_size[0]*0.1, win_size[1]*0.17)
+        
+        self.chatbox.pos = (win_size[0]*0.1, win_size[1]*0.67)
+        self.chatbox.size = (win_size[0]*0.5, win_size[1]*0.5)
+
         if self.game_display:
             for gd in self.game_display:
                 gd.on_resize(win_size)
         if self.attack_box:
             self.attack_box.on_resize(win_size)
-        resize_topleft_label(self.info)
+        # resize_topleft_label(self.info)
+
+        button_width = win_size[0] * 0.05  # 40% of window width
+        button_height = win_size[1] * 0.05 # 10% of window height
+        self.button1.size = (button_width, button_height)
+        self.button1.font_size = 0.02*win_size[0]
+        self.button1.pos = ((win_size[0] - button_width) * 0.3, win_size[1] * 0.9)
+
+        if self.battle_unlocked == True:
+            self.button2.size = (button_width, button_height)
+            self.button2.font_size = 0.02*win_size[0]
+            self.button2.pos = ((win_size[0] - button_width) * 0.8, win_size[1] * 0.8)
 
     def on_update(self):
         self.audio.on_update() # used to be # self.audio_ctrl.on_update()
@@ -154,14 +237,15 @@ class TrainingWidget(Screen):
 
         self.training = reduce(lambda tot,aud_ctrl: tot or aud_ctrl.training, self.audio_ctrl, False)
 
-        self.info.text = "Training Screen; '-' switches to main. ENTER to select attack.\n"
-        self.info.text += "To train an attack, unlock at least half the gems AND have accuracy > 0\n"
-        self.info.text += f'percent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\n'
-        self.info.text += f'accuracy of run: {self.game_display[self.curr_attack_index].acc}\n'
+        # self.info.text = "Training Screen; '-' switches to main. ENTER to select attack.\n"
+        # self.info.text += "To train an attack, unlock at least half the gems AND have accuracy > 0\n"
+        # self.info.text += f'percent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\n'
+        # self.info.text += f'accuracy of run: {self.game_display[self.curr_attack_index].acc}\n'
+        # self.info.text += f'number of attacks trained: {self.active_notemon.attacks_trained}\n'
+        
         # self.info.text = 'p: pause/unpause song\n'
         # self.info.text += f'song time: {now:.2f}\n'
         # self.info.text += f'index {self.curr_attack_index}\n'
-        self.info.text += f'number of attacks trained: {self.active_notemon.attacks_trained}\n'
         # self.info.text += f'num objects: {self.game_display[self.curr_attack_index].get_num_object()}\n'
 
 class Player(object):

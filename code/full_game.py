@@ -698,7 +698,7 @@ class Globals():
         self.pokemon_index = 0
         self.database = NotemonDatabase().make_notemon_array()
         self.pokemon_dict = {0: 'main', 1: 'Notemon_orange', 2: 'Notemon_yellow', 3: 'Notemon_green', 4: 'Notemon_blue', 5: 'Notemon_purple'}
-
+        self.pokemon_counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         # could also create self.audio = Audio(2) here if needed
         # self.audio = Audio(2)
         # (there should only ever be one Audio instance)
