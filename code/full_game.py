@@ -9,7 +9,7 @@ import sys, os
 sys.path.insert(0, os.path.abspath('..'))
 
 from imslib.core import BaseWidget, run
-from imslib.gfxutil import topleft_label, resize_topleft_label, CEllipse, AnimGroup, count_canvas_items
+from imslib.gfxutil import topleft_label, middle_label, resize_topleft_label, CEllipse, AnimGroup, count_canvas_items, resize_middle_label
 from imslib.screen import ScreenManager, Screen
 from imslib.audio import Audio
 
@@ -34,7 +34,9 @@ from AttackDatabase import AttackDatabase
 # Here, 20 dp will always be the same physical size on screen regardless of resolution or OS.
 # Another option is to use metrics.pt or metrics.sp. See https://kivy.org/doc/stable/api-kivy.metrics.html
 font_sz = metrics.dp(20)
-button_sz = metrics.dp(100)
+button_sz = (metrics.dp(400), metrics.dp(120))
+bigger_button_sz = (metrics.dp(800), metrics.dp(120))
+# Window width: 1600, Window height: 1200
 
 attacks = AttackDatabase().get_attack_roster(0)
 audio = Audio(2)
@@ -48,86 +50,527 @@ sched.set_generator(synth)
 
 # IntroScreen is just like a MainWidget, but it derives from Screen instead of BaseWidget.
 # This allows it to work with the ScreenManager system.
-# class IntroScreen(Screen):
-#     def __init__(self, **kwargs):
-#         super(IntroScreen, self).__init__(always_update=False, **kwargs)
+class IntroScreen(Screen):
+    def __init__(self, **kwargs):
+        super(IntroScreen, self).__init__(always_update=False, **kwargs)
 
-#         self.info = topleft_label()
-#         self.info.text = "Welcome to Notemon"
-#         self.info.text += "→: switch to main\n"
-#         self.add_widget(self.info)
+        # Add the background image
+        self.background = Image(
+            source='startscreen.jpg',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
 
-#         self.notemon_selection_widget = TestWidget()
-#         self.add_widget(self.notemon_selection_widget)
-
-#         self.counter = 0
-
-#         # index = 0
-
-#         x_margin = 1/10 #distance from sides of boxes to edge of screen
-#         y_margin = 1/20 #distance from bottom of boxes to edge of screen
-#         box_width = 7/20 #width of boxes
-#         box_height = 1/6 #height of boxes
-#         y_spacing = 1/14 # y-space between boxes
-
-#         w = box_width * Window.width
-#         h = box_height * Window.height
-
-#         x = 1/2 * Window.width - 1/2 * box_width * Window.width
-#         y = Window.height - ((index + 1) * box_height * Window.height + (index + 1) * y_spacing * Window.height)
-
-
-#         # A button is a widget. It must be added with add_widget()
-#         # button.bind allows you to set up a reaction to when the button is pressed (or released).
-#         # It takes a function as argument. You can define one, or just use lambda as an inline function.
-#         # In this case, the button will cause a screen switch
+        self.add_widget(self.background)
         
-#         # self.button1 = Button(text='Notemon 1', font_size=font_sz, size = (button_sz, button_sz), pos = (x+w-765//2, y+h-400//2))
-#         # self.button1.bind(on_release= lambda x: self.switch_to('main'))
-#         # self.add_widget(self.button1)
+        self.button1 = Button(text='Start', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.35), background_color=(0, 0.5, 1, 1), font_name="Roboto-Bold.ttf")
+        self.button1.bind(on_release= lambda x: self.switch_to('main'))
+        self.add_widget(self.button1)
 
-#         # index = 1
-#         # y = Window.height - ((index + 1) * box_height * Window.height + (index + 1) * y_spacing * Window.height)
-#         # self.button2 = Button(text='Notemon 2', font_size=font_sz, size = (button_sz, button_sz), pos = (x+w-765//2, y+h-400//2))
-#         # self.button2.bind(on_release= lambda x: self.switch_to('main'))
-#         # self.add_widget(self.button2)
+        self.button2 = Button(text='Welcome to Notemon', font_size=font_sz*4, size = (bigger_button_sz[0], bigger_button_sz[1]), pos = ((Window.width - bigger_button_sz[0])*.5, Window.height*0.6), background_color=(0, 0.5, 1, 1), font_name="Roboto-Bold.ttf")
+        self.add_widget(self.button2)
+
+
+    def on_key_down(self, keycode, modifiers):
+        if keycode[1] == '=':
+            # tell screen manager to switch from the current screen to some other screen, by name.
+            print('IntroScreen next')
+            self.switch_to('main')
+
+    # this shows that on_update() gets called when this screen is active.
+    # if you want on_update() called when a screen is NOT active, then pass in an extra argument:
+    # always_update=True to the screen constructor.
+    def on_update(self):
+        pass
+
+    # on_resize always gets called - even when a screen is not active.
+    def on_resize(self, win_size):
+        # resize_middle_label(self.info)
+        # Update background size to match new window size
+        self.background.size = win_size
         
-#         # index = 2
-#         # y = Window.height - ((index + 1) * box_height * Window.height + (index + 1) * y_spacing * Window.height)
-#         # self.button3 = Button(text='Notemon 3', font_size=font_sz, size = (button_sz, button_sz), pos = (x+w-765//2, y+h-400//2))
-#         # self.button3.bind(on_release= lambda x: self.switch_to('main'))
-#         # self.add_widget(self.button3)
+        # Dynamically resize buttons based on the new window size
+        bigger_button_width = win_size[0] * 0.5
+        button_width = win_size[0] * 0.4  # 40% of window width
+        button_height = win_size[1] * 0.1  # 10% of window height
 
-#         # index = 3
-#         # y = Window.height - ((index + 1) * box_height * Window.height + (index + 1) * y_spacing * Window.height)
-#         # self.button4 = Button(text='Notemon 4', font_size=font_sz, size = (button_sz, button_sz), pos = (x+w-765//2, y+h-400//2))
-#         # self.button4.bind(on_release= lambda x: self.switch_to('main'))
-#         # self.add_widget(self.button4)
+        # Set button sizes and positions
+        self.button1.size = (button_width, button_height)
+        self.button1.font_size = 0.03*win_size[0]
+        self.button1.pos = ((win_size[0] - button_width) * 0.5, win_size[1] * 0.35)
 
-#     def on_key_down(self, keycode, modifiers):
-#         if keycode[1] == '=':
-#             # tell screen manager to switch from the current screen to some other screen, by name.
-#             print('IntroScreen next')
-#             self.switch_to('main')
+        self.button2.size = (bigger_button_width, button_height)
+        self.button2.font_size = 0.05*win_size[0]
+        self.button2.pos = ((win_size[0] - bigger_button_width) * 0.5, win_size[1] * 0.6)
 
-#     # this shows that on_update() gets called when this screen is active.
-#     # if you want on_update() called when a screen is NOT active, then pass in an extra argument:
-#     # always_update=True to the screen constructor.
-#     def on_update(self):
-#         self.info.text = "Welcome to Notemon\n"
-#         self.info.text += "=: switch to main\n"
-#         # self.info.text += f'fps:{kivyClock.get_fps():.1f}\n'
-#         # self.info.text += f'counter:{self.counter}\n'
-#         # self.counter += 1
+class Notemon_red(Screen):
+    def __init__(self, **kwargs):
+        super(Notemon_red, self).__init__(**kwargs)
 
-#         if hasattr(self.notemon_selection_widget, 'on_update'):
-#             self.notemon_selection_widget.on_update()
+        # Add the background image
+        self.background = Image(
+            source='selection.png',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
 
-#     # on_resize always gets called - even when a screen is not active.
-#     def on_resize(self, win_size):
-#         # self.button.pos = (Window.width/2, Window.height/2)
-#         resize_topleft_label(self.info)
+        self.add_widget(self.background)
 
+        self.notemon = Image(
+            source='meloetta_red.png',      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        
+        self.notemon.pos = (Window.width*0.45, Window.height//2)
+        self.add_widget(self.notemon)
+
+        self.button1 = Button(text='->', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.75, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button1.bind(on_release= lambda x: self.switch_to('Notemon_orange'))
+        self.add_widget(self.button1)
+
+        self.button2 = Button(text='<-', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.68, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button2.bind(on_release= lambda x: self.switch_to('Notemon_purple'))
+        self.add_widget(self.button2)
+
+        self.button3 = Button(text='Select a Notemon:', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.85), background_color=(1, 0.8, 0, 0.8), font_name="Roboto-Bold.ttf")
+        self.add_widget(self.button3)
+
+        self.button4 = Button(text='Select', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.8, Window.height*0.425), color=(0, 0, 0, 1), background_color=(1, 0.8, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button4.bind(on_release= lambda x: self.switch_to('training'))
+        self.add_widget(self.button4)
+
+        
+
+    def on_key_down(self, keycode, modifiers):
+        print(keycode)
+        if keycode[1] == 'right':
+            print('MainScreen next')
+            self.switch_to('Notemon_orange')
+
+        if keycode[1] == 'left':
+            print('MainScreen prev')
+            self.switch_to('Notemon_purple')
+
+    def on_update(self):
+        self.globals.pokemon_index = 0
+
+    def on_resize(self, win_size):
+        self.background.size = win_size
+        self.notemon.pos = (win_size[0]*0.45, win_size[1]//2)
+        self.notemon.size = (win_size[0]*0.1, win_size[1]*0.17)
+
+        button_width = win_size[0] * 0.05  # 40% of window width
+        button_height = win_size[1] * 0.05 # 10% of window height
+        self.button1.size = (button_width, button_height)
+        self.button1.font_size = 0.03*win_size[0]
+        self.button1.pos = ((win_size[0] - button_width) * 0.75, win_size[1] * 0.34)
+
+        self.button2.size = (button_width, button_height)
+        self.button2.font_size = 0.03*win_size[0]
+        self.button2.pos = ((win_size[0] - button_width) * 0.68, win_size[1] * 0.34)
+
+        self.button3.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button3.font_size = 0.03*win_size[0]
+        self.button3.pos = ((win_size[0] - win_size[0]*0.3) * 0.5, win_size[1] * 0.85)
+
+        self.button4.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button4.font_size = 0.03*win_size[0]
+        self.button4.pos = ((win_size[0] - win_size[0]*0.3) * 0.8, win_size[1] * 0.425)
+
+class Notemon_orange(Screen):
+    def __init__(self, **kwargs):
+        super(Notemon_orange, self).__init__(**kwargs)
+
+        # Add the background image
+        self.background = Image(
+            source='selection.png',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
+
+        self.notemon = Image(
+            source='meloetta_orange.png',      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        
+        self.notemon.pos = (Window.width*0.45, Window.height//2)
+        self.add_widget(self.notemon)
+
+        self.button1 = Button(text='->', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.75, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button1.bind(on_release= lambda x: self.switch_to('Notemon_yellow'))
+        self.add_widget(self.button1)
+
+        self.button2 = Button(text='<-', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.68, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button2.bind(on_release= lambda x: self.switch_to('main'))
+        self.add_widget(self.button2)
+
+        self.button3 = Button(text='Select a Notemon:', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.85), background_color=(1, 0.8, 0, 0.8), font_name="Roboto-Bold.ttf")
+        self.add_widget(self.button3)
+
+        self.button4 = Button(text='Select', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.8, Window.height*0.425), color=(0, 0, 0, 1), background_color=(1, 0.8, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button4.bind(on_release= lambda x: self.switch_to('training'))
+        self.add_widget(self.button4)
+
+    def on_key_down(self, keycode, modifiers):
+        if keycode[1] == 'right':
+            print('MainScreen next')
+            self.switch_to('Notemon_yellow')
+
+        if keycode[1] == 'left':
+            print('MainScreen prev')
+            self.switch_to('main')
+
+    def on_update(self):
+        self.globals.pokemon_index = 1
+
+    def on_resize(self, win_size):
+        self.background.size = win_size
+        self.notemon.pos = (win_size[0]*0.45, win_size[1]//2)
+        self.notemon.size = (win_size[0]*0.1, win_size[1]*0.17)
+
+        button_width = win_size[0] * 0.05  # 40% of window width
+        button_height = win_size[1] * 0.05 # 10% of window height
+        self.button1.size = (button_width, button_height)
+        self.button1.font_size = 0.03*win_size[0]
+        self.button1.pos = ((win_size[0] - button_width) * 0.75, win_size[1] * 0.34)
+
+        self.button2.size = (button_width, button_height)
+        self.button2.font_size = 0.03*win_size[0]
+        self.button2.pos = ((win_size[0] - button_width) * 0.68, win_size[1] * 0.34)
+
+        self.button3.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button3.font_size = 0.03*win_size[0]
+        self.button3.pos = ((win_size[0] - win_size[0]*0.3) * 0.5, win_size[1] * 0.85)
+
+        self.button4.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button4.font_size = 0.03*win_size[0]
+        self.button4.pos = ((win_size[0] - win_size[0]*0.3) * 0.8, win_size[1] * 0.425)
+
+class Notemon_yellow(Screen):
+    def __init__(self, **kwargs):
+        super(Notemon_yellow, self).__init__(**kwargs)
+
+        # Add the background image
+        self.background = Image(
+            source='selection.png',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
+
+        self.notemon = Image(
+            source='meloetta_yellow.png',      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        
+        self.notemon.pos = (Window.width*0.45, Window.height//2)
+        self.add_widget(self.notemon)
+
+        self.button1 = Button(text='->', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.75, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button1.bind(on_release= lambda x: self.switch_to('Notemon_green'))
+        self.add_widget(self.button1)
+
+        self.button2 = Button(text='<-', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.68, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button2.bind(on_release= lambda x: self.switch_to('Notemon_orange'))
+        self.add_widget(self.button2)
+
+        self.button3 = Button(text='Select a Notemon:', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.85), background_color=(1, 0.8, 0, 0.8), font_name="Roboto-Bold.ttf")
+        self.add_widget(self.button3)
+
+        self.button4 = Button(text='Select', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.8, Window.height*0.425), color=(0, 0, 0, 1), background_color=(1, 0.8, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button4.bind(on_release= lambda x: self.switch_to('training'))
+        self.add_widget(self.button4)
+
+    def on_key_down(self, keycode, modifiers):
+        if keycode[1] == 'right':
+            print('MainScreen next')
+            self.switch_to('Notemon_green')
+
+        if keycode[1] == 'left':
+            print('MainScreen prev')
+            self.switch_to('Notemon_orange')
+
+    def on_update(self):
+        self.globals.pokemon_index = 2
+
+    def on_resize(self, win_size):
+        self.background.size = win_size
+        self.notemon.pos = (win_size[0]*0.45, win_size[1]//2)
+        self.notemon.size = (win_size[0]*0.1, win_size[1]*0.17)
+
+        button_width = win_size[0] * 0.05  # 40% of window width
+        button_height = win_size[1] * 0.05 # 10% of window height
+        self.button1.size = (button_width, button_height)
+        self.button1.font_size = 0.03*win_size[0]
+        self.button1.pos = ((win_size[0] - button_width) * 0.75, win_size[1] * 0.34)
+
+        self.button2.size = (button_width, button_height)
+        self.button2.font_size = 0.03*win_size[0]
+        self.button2.pos = ((win_size[0] - button_width) * 0.68, win_size[1] * 0.34)
+
+        self.button3.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button3.font_size = 0.03*win_size[0]
+        self.button3.pos = ((win_size[0] - win_size[0]*0.3) * 0.5, win_size[1] * 0.85)
+
+        self.button4.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button4.font_size = 0.03*win_size[0]
+        self.button4.pos = ((win_size[0] - win_size[0]*0.3) * 0.8, win_size[1] * 0.425)
+
+class Notemon_green(Screen):
+    def __init__(self, **kwargs):
+        super(Notemon_green, self).__init__(**kwargs)
+
+        # Add the background image
+        self.background = Image(
+            source='selection.png',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
+
+        self.notemon = Image(
+            source='meloetta_green.png',      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        
+        self.notemon.pos = (Window.width*0.45, Window.height//2)
+        self.add_widget(self.notemon)
+
+        self.button1 = Button(text='->', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.75, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button1.bind(on_release= lambda x: self.switch_to('Notemon_blue'))
+        self.add_widget(self.button1)
+
+        self.button2 = Button(text='<-', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.68, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button2.bind(on_release= lambda x: self.switch_to('Notemon_yellow'))
+        self.add_widget(self.button2)
+
+        self.button3 = Button(text='Select a Notemon:', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.85), background_color=(1, 0.8, 0, 0.8), font_name="Roboto-Bold.ttf")
+        self.add_widget(self.button3)
+
+        self.button4 = Button(text='Select', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.8, Window.height*0.425), color=(0, 0, 0, 1), background_color=(1, 0.8, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button4.bind(on_release= lambda x: self.switch_to('training'))
+        self.add_widget(self.button4)
+
+    def on_key_down(self, keycode, modifiers):
+        if keycode[1] == 'right':
+            print('MainScreen next')
+            self.switch_to('Notemon_blue')
+
+        if keycode[1] == 'left':
+            print('MainScreen prev')
+            self.switch_to('Notemon_yellow')
+
+    def on_update(self):
+        self.globals.pokemon_index = 3
+
+    def on_resize(self, win_size):
+        self.background.size = win_size
+        self.notemon.pos = (win_size[0]*0.45, win_size[1]//2)
+        self.notemon.size = (win_size[0]*0.1, win_size[1]*0.17)
+
+        button_width = win_size[0] * 0.05  # 40% of window width
+        button_height = win_size[1] * 0.05 # 10% of window height
+        self.button1.size = (button_width, button_height)
+        self.button1.font_size = 0.03*win_size[0]
+        self.button1.pos = ((win_size[0] - button_width) * 0.75, win_size[1] * 0.34)
+
+        self.button2.size = (button_width, button_height)
+        self.button2.font_size = 0.03*win_size[0]
+        self.button2.pos = ((win_size[0] - button_width) * 0.68, win_size[1] * 0.34)
+
+        self.button3.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button3.font_size = 0.03*win_size[0]
+        self.button3.pos = ((win_size[0] - win_size[0]*0.3) * 0.5, win_size[1] * 0.85)
+
+        self.button4.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button4.font_size = 0.03*win_size[0]
+        self.button4.pos = ((win_size[0] - win_size[0]*0.3) * 0.8, win_size[1] * 0.425)
+
+class Notemon_blue(Screen):
+    def __init__(self, **kwargs):
+        super(Notemon_blue, self).__init__(**kwargs)
+
+        # Add the background image
+        self.background = Image(
+            source='selection.png',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
+
+        self.notemon = Image(
+            source='meloetta_blue.png',      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        
+        self.notemon.pos = (Window.width*0.45, Window.height//2)
+        self.add_widget(self.notemon)
+
+        self.button1 = Button(text='->', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.75, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button1.bind(on_release= lambda x: self.switch_to('Notemon_purple'))
+        self.add_widget(self.button1)
+
+        self.button2 = Button(text='<-', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.68, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button2.bind(on_release= lambda x: self.switch_to('Notemon_green'))
+        self.add_widget(self.button2)
+
+        self.button3 = Button(text='Select a Notemon:', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.85), background_color=(1, 0.8, 0, 0.8), font_name="Roboto-Bold.ttf")
+        self.add_widget(self.button3)
+
+        self.button4 = Button(text='Select', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.8, Window.height*0.425), color=(0, 0, 0, 1), background_color=(1, 0.8, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button4.bind(on_release= lambda x: self.switch_to('training'))
+        self.add_widget(self.button4)
+
+
+    def on_key_down(self, keycode, modifiers):
+        if keycode[1] == 'right':
+            print('MainScreen next')
+            self.switch_to('Notemon_purple')
+
+        if keycode[1] == 'left':
+            print('MainScreen prev')
+            self.switch_to('Notemon_green')
+
+    def on_update(self):
+        self.globals.pokemon_index = 4
+
+    def on_resize(self, win_size):
+        self.background.size = win_size
+        self.notemon.pos = (win_size[0]*0.45, win_size[1]//2)
+        self.notemon.size = (win_size[0]*0.1, win_size[1]*0.17)
+
+        button_width = win_size[0] * 0.05  # 40% of window width
+        button_height = win_size[1] * 0.05 # 10% of window height
+        self.button1.size = (button_width, button_height)
+        self.button1.font_size = 0.03*win_size[0]
+        self.button1.pos = ((win_size[0] - button_width) * 0.75, win_size[1] * 0.34)
+
+        self.button2.size = (button_width, button_height)
+        self.button2.font_size = 0.03*win_size[0]
+        self.button2.pos = ((win_size[0] - button_width) * 0.68, win_size[1] * 0.34)
+
+        self.button3.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button3.font_size = 0.03*win_size[0]
+        self.button3.pos = ((win_size[0] - win_size[0]*0.3) * 0.5, win_size[1] * 0.85)
+
+        self.button4.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button4.font_size = 0.03*win_size[0]
+        self.button4.pos = ((win_size[0] - win_size[0]*0.3) * 0.8, win_size[1] * 0.425)
+
+class Notemon_purple(Screen):
+    def __init__(self, **kwargs):
+        super(Notemon_purple, self).__init__(**kwargs)
+
+        # Add the background image
+        self.background = Image(
+            source='selection.png',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
+
+        self.notemon = Image(
+            source='meloetta_purple.png',      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        
+        self.notemon.pos = (Window.width*0.45, Window.height//2)
+        self.add_widget(self.notemon)
+
+        self.button1 = Button(text='->', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.75, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button1.bind(on_release= lambda x: self.switch_to('main'))
+        self.add_widget(self.button1)
+
+        self.button2 = Button(text='<-', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.68, Window.height*0.34), color=(0, 0, 0, 1), background_color=(1, 0.647, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button2.bind(on_release= lambda x: self.switch_to('Notemon_blue'))
+        self.add_widget(self.button2)
+
+        self.button3 = Button(text='Select a Notemon:', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.85), background_color=(1, 0.8, 0, 0.8), font_name="Roboto-Bold.ttf")
+        self.add_widget(self.button3)
+
+        self.button4 = Button(text='Select', font_size=font_sz*1.5, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.8, Window.height*0.425), color=(0, 0, 0, 1), background_color=(1, 0.8, 0, 0), font_name="Roboto-Bold.ttf")
+        self.button4.bind(on_release= lambda x: self.switch_to('training'))
+        self.add_widget(self.button4)
+
+    def on_key_down(self, keycode, modifiers):
+        if keycode[1] == 'right':
+            print('MainScreen next')
+            self.switch_to('main')
+
+        if keycode[1] == 'left':
+            print('MainScreen prev')
+            self.switch_to('Notemon_blue')
+
+    def on_update(self):
+        self.globals.pokemon_index = 5
+
+    def on_resize(self, win_size):
+        self.background.size = win_size
+        self.notemon.pos = (win_size[0]*0.45, win_size[1]//2)
+        self.notemon.size = (win_size[0]*0.1, win_size[1]*0.17)
+
+        button_width = win_size[0] * 0.05  # 40% of window width
+        button_height = win_size[1] * 0.05 # 10% of window height
+        self.button1.size = (button_width, button_height)
+        self.button1.font_size = 0.03*win_size[0]
+        self.button1.pos = ((win_size[0] - button_width) * 0.75, win_size[1] * 0.34)
+
+        self.button2.size = (button_width, button_height)
+        self.button2.font_size = 0.03*win_size[0]
+        self.button2.pos = ((win_size[0] - button_width) * 0.68, win_size[1] * 0.34)
+
+        self.button3.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button3.font_size = 0.03*win_size[0]
+        self.button3.pos = ((win_size[0] - win_size[0]*0.3) * 0.5, win_size[1] * 0.85)
+
+        self.button4.size = (win_size[0]*0.3, win_size[1]*0.06)
+        self.button4.font_size = 0.03*win_size[0]
+        self.button4.pos = ((win_size[0] - win_size[0]*0.3) * 0.8, win_size[1] * 0.425)
 
 class MainScreen(Screen):
     def __init__(self, **kwargs):
@@ -149,15 +592,15 @@ class MainScreen(Screen):
         self.add_widget(self.info)
 
         # more buttons - one to switch back to the intro screen, and one to switch to the training screen.
-        self.button1 = Button(text='Select \n Notemon', font_size=font_sz, size = (button_sz, button_sz), pos = (Window.width * .25, Window.height/2))
+        self.button1 = Button(text='Select \n Notemon', font_size=font_sz, size = (button_sz[1], button_sz[1]), pos = (Window.width * .25, Window.height/2))
         self.button1.bind(on_release= lambda x: self.switch_to('intro'))
         self.add_widget(self.button1)
 
-        self.button2 = Button(text='Training', font_size=font_sz, size = (button_sz, button_sz), pos = (Window.width * .45, Window.height/2))
+        self.button2 = Button(text='Training', font_size=font_sz, size = (button_sz[1], button_sz[1]), pos = (Window.width * .45, Window.height/2))
         self.button2.bind(on_release= lambda x: self.switch_to('training'))
         self.add_widget(self.button2)
 
-        self.button3 = Button(text='Battle', font_size=font_sz, size = (button_sz, button_sz), pos = (Window.width * .65, Window.height/2))
+        self.button3 = Button(text='Battle', font_size=font_sz, size = (button_sz[1], button_sz[1]), pos = (Window.width * .65, Window.height/2))
         self.button3.bind(on_release= lambda x: self.switch_to('battle'))
         self.add_widget(self.button3)
 
@@ -254,6 +697,8 @@ class Globals():
         self.total_score = 0
         self.pokemon_index = 0
         self.database = NotemonDatabase().make_notemon_array()
+        self.pokemon_dict = {0: 'main', 1: 'Notemon_orange', 2: 'Notemon_yellow', 3: 'Notemon_green', 4: 'Notemon_blue', 5: 'Notemon_purple'}
+
         # could also create self.audio = Audio(2) here if needed
         # self.audio = Audio(2)
         # (there should only ever be one Audio instance)
@@ -266,9 +711,14 @@ sm = ScreenManager(globals=Globals())
 # each screen must have a name argument (so that switch_to() will work).
 # If screens need to share data between themselves, feel free to pass in additional arguments
 # like a shared data class or they can even know directly about each other as needed.
-sm.add_screen(NotemonSelectionBox(name='intro'))
-sm.add_screen(MainScreen(name='main'))
+# sm.add_screen(NotemonSelectionBox(name='intro'))
+sm.add_screen(IntroScreen(name='intro'))
+sm.add_screen(Notemon_red(name='main'))
+sm.add_screen(Notemon_orange(name='Notemon_orange'))
+sm.add_screen(Notemon_yellow(name='Notemon_yellow'))
+sm.add_screen(Notemon_green(name='Notemon_green'))
+sm.add_screen(Notemon_blue(name='Notemon_blue'))
+sm.add_screen(Notemon_purple(name='Notemon_purple'))
 sm.add_screen(TrainingWidget('training', audio, synth, sched))
 sm.add_screen(MainWidget('battle', audio, synth, sched))
-
 run(sm)

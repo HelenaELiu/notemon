@@ -39,6 +39,22 @@ def topleft_label(font_size='20sp', monospace=False, color=(1,1,1,1)):
               text_size=(Window.width, Window.height))
     return l
 
+def middle_label(font_size='40sp', monospace=False, color=(0,0,0,1)):
+    """
+    :returns: A Label object configured to be positioned at the top-left of the screen.
+    """
+
+    if monospace:
+        font_name = 'Inconsolata'
+    else:
+        font_name = 'Arial'
+
+    l = Label(text = "text", valign='top',
+              font_size=font_size, font_name=font_name, color=color,
+              pos=(Window.width * 0.5, Window.height * 0.5),
+              text_size=(Window.width * 0.5, Window.height * 0.5))
+    return l
+
 
 def resize_topleft_label(label):
     """
@@ -49,6 +65,17 @@ def resize_topleft_label(label):
     """
     label.pos = (Window.width * 0.5 - 40, Window.height * 0.5 - 55)
     label.text_size = (Window.width, Window.height)
+
+
+def resize_middle_label(label):
+    """
+    If the screen size has changed, repositions the label so that it remains
+    in the top-left of the window.
+
+    :param label: The Label object.
+    """
+    label.pos = (Window.width * 0.5, Window.height * 0.5)
+    label.text_size = (Window.width * 0.5, Window.height * 0.5)
 
 class CLabelRect(InstructionGroup):
     """

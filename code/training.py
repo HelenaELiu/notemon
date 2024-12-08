@@ -83,7 +83,7 @@ class TrainingWidget(Screen):
     def on_key_down(self, keycode, modifiers):
         if keycode[1] == '-':
             print('trainingScreen prev')
-            self.switch_to('main')
+            self.switch_to(self.globals.pokemon_dict[self.globals.pokemon_index])
 
         # only change selected attack if not actively training
         elif not self.training and keycode[1] in ('right', 'left', 'up', 'down'):
