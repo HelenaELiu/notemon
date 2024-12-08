@@ -25,7 +25,7 @@ from training_display_components import btns, accuracy_window
 from AttackDatabase import AttackDatabase
 
 y_margin = 0.3 #distance from bottom of boxes to edge of screen
-meloetta_dict = {0: 'meloetta_red', 1: 'meloetta_orange', 2: 'meloetta_yellow', 3: 'meloetta_green', 4: 'meloetta_blue', 5: 'meloetta_purple'}
+meloetta_dict = {0: 'meloetta_red', 1: 'meloetta_yellow', 2: 'meloetta_orange', 3: 'meloetta_green', 4: 'meloetta_blue', 5: 'meloetta_purple'}
 font_sz = metrics.dp(15)
 button_sz = (metrics.dp(400), metrics.dp(120))
 
@@ -133,7 +133,7 @@ class TrainingWidget(Screen):
             self.globals.pokemon_counter[self.globals.pokemon_index] += 1  # Increment the counter
 
             if self.globals.pokemon_counter[self.globals.pokemon_index] == 1:
-                self.button1.text = "Press '-' to pick a different color notemon. \nPress '=' to continue."
+                self.button1.text = "Press '-' to pick a different color notemon from the ones available. \nPress '=' to continue."
             elif self.globals.pokemon_counter[self.globals.pokemon_index] == 2:
                 self.button1.text = "To train an attack, unlock at least \nhalf the gems AND have accuracy > 0. \nPress '=' to continue."
             elif self.globals.pokemon_counter[self.globals.pokemon_index] == 3:
@@ -145,7 +145,7 @@ class TrainingWidget(Screen):
 
         if keycode[1] == '-':
             print('trainingScreen prev')
-            self.switch_to(self.globals.pokemon_dict[self.globals.pokemon_index])
+            self.switch_to(self.globals.database[self.globals.pokemon_index].screen_name)
 
         # only change selected attack if not actively training
         elif not self.training and keycode[1] in ('right', 'left', 'up', 'down'):

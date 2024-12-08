@@ -104,7 +104,7 @@ class MainWidget(Screen):
     def on_key_down(self, keycode, modifiers):
         if keycode[1] == '-':
             print('battleScreen prev')
-            self.switch_to('main')
+            self.switch_to(self.globals.database[self.globals.pokemon_index].screen_name)
 
         if not self.display.invalid and self.display.check_complete():
             return
@@ -154,6 +154,8 @@ class MainWidget(Screen):
             self.rhythm_display[self.opp_box_played].on_button_up()
 
     def attack_player(self, tick):
+        if self.display.notemon_opponent.fainted:
+            return
         weapon_select = random.randrange(4)
         new_text = f"{self.display.opponent_name} is about to use {self.op_attacks[weapon_select].name} !\n"
         new_text += f"Listen carefully, and block as each note hits."

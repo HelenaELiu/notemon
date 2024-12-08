@@ -7,6 +7,7 @@ class NotemonDatabase(object):
         #names
         self.attack_database = AttackDatabase()
         self.names = ["melored", "meloyellow", "melorange", "melogreen", "meloblue", "melopurple"]
+        self.screen_names = ["Notemon_red", "Notemon_yellow", "Notemon_orange", "Notemon_green", "Notemon_blue", "Notemon_purple"]
 
         #image sources
         colors = ["red", "yellow", "orange", "green", "blue", "purple"]
@@ -52,6 +53,7 @@ class NotemonDatabase(object):
 class Notemon(object):
     def __init__(self, index, database):
         self.name = database.names[index]
+        self.screen_name = database.screen_names[index]
         self.h = database.hs[index]
         self.img_src = database.img_srcs[index]
         self.health = database.healths[self.name]
