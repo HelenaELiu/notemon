@@ -320,6 +320,7 @@ class BattleTutorial(Screen):
         self.notemon = Image()
 
     def on_enter(self):
+        self.counter = 0
         self.globals.opp_index = random.randrange(6)
         path = f'{self.globals.meloetta_dict[self.globals.pokemon_index]}.png'
         self.notemon = Image(
