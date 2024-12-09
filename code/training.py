@@ -116,7 +116,7 @@ class TrainingWidget(Screen):
         self.chatbox.pos = (Window.width*0.1, Window.height*0.67)
         self.add_widget(self.chatbox)
 
-        self.on_resize((Window.width, Window.height))
+        # self.on_resize((Window.width, Window.height))
 
     def on_exit(self):
         self.canvas.remove(self.attack_box)

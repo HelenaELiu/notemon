@@ -109,7 +109,7 @@ class ButtonDisplay(InstructionGroup):
         self.add(self.button)
 
         self.add(Color(hsv=(1,0,1))) # label is white, don't really need to save bc it doesn't change
-        self.label = CLabelRect(cpos=(self.x, btn_h * Window.height), text="Block!")
+        self.label = CLabelRect(cpos=(self.x, btn_h * Window.height), text="Block!", font_size=0.013*Window.width)
         self.add(self.label)
 
         # Reconfigure button to contain up/down information
@@ -131,7 +131,9 @@ class ButtonDisplay(InstructionGroup):
 
         self.button.csize = (self.width, self.height)
         self.button.cpos=(self.x, btn_h * win_size[1])
-        self.label.cpos = (self.x, btn_h * win_size[1])
+        self.remove(self.label)
+        self.label = CLabelRect(cpos = (self.x, btn_h * win_size[1]), text=self.label.text, font_size=0.013*Window.width)
+        self.add(self.label)
 
 class RhythmDisplay(InstructionGroup):
     def __init__(self, attack):

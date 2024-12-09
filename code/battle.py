@@ -44,7 +44,7 @@ class MainWidget(Screen):
 
         # Add the background image
         self.background = Image(
-            source='battle.jpg',  # Replace with the path to your image
+            source='battle1.png',  # Replace with the path to your image
             allow_stretch=True,       # Allow the image to stretch to fill the screen
             keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
         )
@@ -245,7 +245,7 @@ class GameDisplay(InstructionGroup):
         self.label_x = Window.width // 2
         self.label_y = (1 - 9 * y_margin) * Window.height
         self.text = ""
-        self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = self.text)
+        self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = self.text, font_size=0.013*Window.width)
         self.add(self.label)
 
         unlocked = [ind for ind, attack in enumerate(attacks) if attack.unlocked]
@@ -279,7 +279,7 @@ class GameDisplay(InstructionGroup):
         self.remove(self.label)
 
         self.text = new_text
-        self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = self.text)
+        self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = self.text, font_size=0.013*Window.width)
         self.add(Color(1, 1, 1))
         self.add(self.label)
     
@@ -320,9 +320,11 @@ class GameDisplay(InstructionGroup):
             self.notemon_us.on_resize(win_size)
             self.box.on_resize(win_size)
 
+            self.remove(self.label)
             self.label_x = Window.width // 2
             self.label_y = (1 - 9 * y_margin) * Window.height
-            self.label.cpos = (self.label_x, self.label_y)
+            self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = self.label.text, font_size=win_size[0]*0.013)
+            self.add(self.label)
     
     def on_update(self):
         if not self.invalid:

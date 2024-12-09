@@ -56,7 +56,7 @@ class NotemonDisplay(InstructionGroup):
         self.label_y = self.y + img_size[1] * 1.2
         
         self.notemon = Rectangle(texture = self.img, pos = (self.x, self.y), size = img_size)
-        self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = "health: " + str(self.health))
+        self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = "health: " + str(self.health), font_size=0.013*Window.width)
 
         self.add(self.color)
         self.add(self.notemon)
@@ -84,9 +84,11 @@ class NotemonDisplay(InstructionGroup):
         self.label_x = self.x + img_size[0] / 2
         self.label_y = self.y + img_size[1] * 1.2
 
-        self.label.cpos = (self.label_x, self.label_y)
-    
+        self.remove(self.label)
+        self.label = CLabelRect(cpos = (self.label_x, self.label_y), text=self.label.text, font_size=0.013*win_size[0])
+        self.add(self.label)
+
     def on_update(self):
         self.remove(self.label)
-        self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = "health: " + str(self.health))
+        self.label = CLabelRect(cpos = (self.label_x, self.label_y), text = "health: " + str(self.health), font_size=0.013*Window.width)
         self.add(self.label)

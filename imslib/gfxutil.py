@@ -97,6 +97,7 @@ class CLabelRect(InstructionGroup):
 
         self.font_size = font_size
         self.font_name = font_name
+        self.text = text
 
         self.label = Label(text=text, font_size=str(self.font_size)+"sp", font_name=self.font_name)
         self.label.texture_update()
