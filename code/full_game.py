@@ -320,7 +320,7 @@ class BattleTutorial(Screen):
         self.notemon = Image()
 
     def on_enter(self):
-        self.counter = 0
+        self.button1.text = "Welcome to Battle! \nPress '=' to continue"
         self.globals.opp_index = random.randrange(6)
         path = f'{self.globals.meloetta_dict[self.globals.pokemon_index]}.png'
         self.notemon = Image(
@@ -334,6 +334,9 @@ class BattleTutorial(Screen):
         self.add_widget(self.notemon)
 
         self.on_resize((Window.width, Window.height))
+
+    def on_exit(self):
+        self.counter = 0
 
     def on_resize(self, win_size):
         self.background.size = win_size
@@ -351,6 +354,7 @@ class BattleTutorial(Screen):
         if keycode[1] == '=':
             print(self.globals.pokemon_index)
             self.counter +=1
+            print(self.globals.opp_index)
             if self.counter == 1 and self.globals.opp_index < 3: # 0, 1, 2
                 self.button1.text = "Defend by pressing space in time with the attack.\nReady? Press '=' to start"
             elif self.counter == 1 and self.globals.opp_index > 2: # 3, 4, 5
