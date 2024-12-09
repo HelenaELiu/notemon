@@ -25,7 +25,7 @@ from training_display_components import btns, accuracy_window
 from AttackDatabase import AttackDatabase
 
 y_margin = 0.3 #distance from bottom of boxes to edge of screen
-meloetta_dict = {0: 'meloetta_red', 1: 'meloetta_yellow', 2: 'meloetta_orange', 3: 'meloetta_green', 4: 'meloetta_blue', 5: 'meloetta_purple'}
+meloetta_dict = {0: 'meloetta_red', 1: 'meloetta_orange', 2: 'meloetta_yellow', 3: 'meloetta_green', 4: 'meloetta_blue', 5: 'meloetta_purple'}
 font_sz = metrics.dp(15)
 button_sz = (metrics.dp(400), metrics.dp(120))
 
