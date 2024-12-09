@@ -64,8 +64,8 @@ class MainWidget(Screen):
         # self.audio.set_generator(self.sched)
         # self.sched.set_generator(self.synth)
 
-        self.info = topleft_label()
-        self.add_widget(self.info)
+        # self.info = topleft_label()
+        # self.add_widget(self.info)
 
         self.opp_box_played = None
         # self.player_defending = False
@@ -190,16 +190,16 @@ class MainWidget(Screen):
         self.tick = None
 
     def on_update(self):
-        self.info.text = "Battle Screen\n"
-        if self.direction_enable:
-            self.info.text += "Defend by: \n"
-            self.info.text += "Pressing up as the pitch goes up,\n"
-            self.info.text += "down as the pitch goes down,\n"
-            self.info.text += "and space otherwise!\n"
-            self.info.text += "And do it all in time with their attack!\n"
-        else:
-            self.info.text += "Defend by pressing space in time with the attack!\n"
-        self.info.text += "-: switch main\n"
+        # self.info.text = "Battle Screen\n"
+        # if self.direction_enable:
+        #     self.info.text += "Defend by: \n"
+        #     self.info.text += "Pressing up as the pitch goes up,\n"
+        #     self.info.text += "down as the pitch goes down,\n"
+        #     self.info.text += "and space otherwise!\n"
+        #     self.info.text += "And do it all in time with their attack!\n"
+        # else:
+        #     self.info.text += "Defend by pressing space in time with the attack!\n"
+        # self.info.text += "-: switch main\n"
 
         self.display.on_update()
         self.audio.on_update()
@@ -225,7 +225,7 @@ class MainWidget(Screen):
                 rd.on_resize(win_size)
         if self.display:
             self.display.on_resize(win_size)
-        resize_topleft_label(self.info)
+        # resize_topleft_label(self.info)
 
 # Displays all game elements: attack boxes, notemon sprites
 class GameDisplay(InstructionGroup):

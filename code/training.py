@@ -189,7 +189,7 @@ class TrainingWidget(Screen):
             self.active_notemon.attacks_trained += 1
             self.attacks[self.curr_attack_index].unlocked = True
             self.button2 = Button(text='Click to go \nto Battle', font_size=0.02*Window.width, size = (Window.width*0.17, Window.height*0.07), pos = (Window.width-(Window.width*0.25) * .7, Window.height-(Window.height*0.1)*.7), background_color=(0, 0.5, 1, 1), font_name="Roboto-Bold.ttf")
-            self.button2.bind(on_release= lambda x: self.switch_to('battle'))
+            self.button2.bind(on_release= lambda x: self.switch_to('battletutorial'))
             self.add_widget(self.button2)
             self.battle_unlocked = True
             return

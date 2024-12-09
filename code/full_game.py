@@ -73,6 +73,10 @@ class IntroScreen(Screen):
         self.button2 = Button(text='Welcome to Notemon', font_size=font_sz*4, size = (bigger_button_sz[0], bigger_button_sz[1]), pos = ((Window.width - bigger_button_sz[0])*.5, Window.height*0.6), background_color=(0, 0.5, 1, 1), font_name="Roboto-Bold.ttf")
         self.add_widget(self.button2)
 
+        self.button3 = Button(text='Welcome to Battle', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.85), background_color=(0, 0.5, 1, 0), font_name="Roboto-Bold.ttf")
+        self.button3.bind(on_release= lambda x: self.switch_to('battletutorial'))
+        self.add_widget(self.button3)
+
 
     def on_key_down(self, keycode, modifiers):
         if keycode[1] == '=':
@@ -296,6 +300,57 @@ class Notemon_purple(NotemonScreen):
         self.switch_fwd = 'Notemon_red'
         self.switch_back = 'Notemon_blue'
 
+class BattleTutorial(Screen):
+    def __init__(self, **kwargs):
+        super(BattleTutorial, self).__init__(**kwargs)
+
+        # Add the background image
+        self.background = Image(
+            source='battle1.png',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
+        self.counter = 0
+        self.button1 = Button(text="Welcome to Battle \nPress '=' to continue", font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.85), background_color=(0, 0.5, 1, 0), font_name="Roboto-Bold.ttf")
+        self.add_widget(self.button1)
+
+        # self.info.text = "Battle Screen\n"
+        # if self.direction_enable:
+        #     self.info.text += "Defend by: \n"
+        #     self.info.text += "Pressing up as the pitch goes up,\n"
+        #     self.info.text += "down as the pitch goes down,\n"
+        #     self.info.text += "and space otherwise!\n"
+        #     self.info.text += "And do it all in time with their attack!\n"
+        # else:
+        #     self.info.text += "Defend by pressing space in time with the attack!\n"
+        # self.info.text += "-: switch main\n"
+
+    def on_resize(self, win_size):
+        self.background.size = win_size
+        button_width = win_size[0] * 0.4  # 40% of window width
+        button_height = win_size[1] * 0.1  # 10% of window height
+
+        # Set button sizes and positions
+        self.button1.size = (button_width, button_height)
+        self.button1.font_size = 0.03*win_size[0]
+        self.button1.pos = ((win_size[0] - button_width) * 0.5, win_size[1] * 0.85)
+    
+    def on_key_down(self, keycode, modifiers):
+        if keycode[1] == '=':
+            print(self.globals.pokemon_index)
+            self.counter +=1
+            if self.counter == 1 and self.globals.pokemon_index < 3: # 0, 1, 2
+                self.button1.text = "Defend by pressing space in time with the attack.\nReady? Press '=' to start"
+            elif self.counter == 1 and self.globals.pokemon_index > 2: # 3, 4, 5
+                self.button1.text = "Defend by pressing up as the pitch goes up, \ndown as the pitch goes down, and space otherwise.\nReady? Press '=' to start"
+            else:
+                self.switch_to("battle")
+
 class MainScreen(Screen):
     def __init__(self, **kwargs):
         super(MainScreen, self).__init__(**kwargs)
@@ -386,5 +441,6 @@ sm.add_screen(Notemon_blue(name='Notemon_blue'))
 sm.add_screen(Notemon_purple(name='Notemon_purple'))
 sm.add_screen(TrainingWidget('training', audio, synth, sched))
 sm.add_screen(MainWidget('battle', audio, synth, sched))
+sm.add_screen(BattleTutorial(name='battletutorial'))
 sm.globals.add_notemon_screens(sm.screens)
 run(sm)
