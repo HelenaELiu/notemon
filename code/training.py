@@ -73,13 +73,11 @@ class TrainingWidget(Screen):
         if self.globals.pokemon_counter[self.globals.pokemon_index] == 0:
                 self.button1.text = "Hi, I am Meloetta. \nHere you can train for battle.\nPress '=' to continue."
         elif self.globals.pokemon_counter[self.globals.pokemon_index] == 1:
-                self.button1.text = "Press '-' to pick a different color notemon. \nPress '=' to continue."
-        elif self.globals.pokemon_counter[self.globals.pokemon_index] == 2:
             self.button1.text = "To train an attack, unlock at least \nhalf the gems AND have accuracy > 0. \nPress '=' to continue."
-        elif self.globals.pokemon_counter[self.globals.pokemon_index] == 3:
+        elif self.globals.pokemon_counter[self.globals.pokemon_index] == 2:
             self.button1.text = "Press ENTER to select an attack. \nPress '=' to continue."
         else:
-            self.button1.text = f"percent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\naccuracy of run: {self.game_display[self.curr_attack_index].acc}\nnumber of attacks trained: {self.active_notemon.attacks_trained}\n" 
+            self.button1.text = f"Percent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\nAccuracy of run: {self.game_display[self.curr_attack_index].acc}\n{ '(This attack is trained.)' if self.attacks[self.curr_attack_index].unlocked == True else ''}" 
 
         self.active_notemon = self.globals.database[self.globals.pokemon_index]
         self.attacks = self.globals.database[self.globals.pokemon_index].attacks
@@ -133,13 +131,11 @@ class TrainingWidget(Screen):
             self.globals.pokemon_counter[self.globals.pokemon_index] += 1  # Increment the counter
 
             if self.globals.pokemon_counter[self.globals.pokemon_index] == 1:
-                self.button1.text = "Press '-' to pick a different color notemon from the ones available. \nPress '=' to continue."
-            elif self.globals.pokemon_counter[self.globals.pokemon_index] == 2:
                 self.button1.text = "To train an attack, unlock at least \nhalf the gems AND have accuracy > 0. \nPress '=' to continue."
-            elif self.globals.pokemon_counter[self.globals.pokemon_index] == 3:
-                self.button1.text = "Use the arrow keys to choose an attack. \nPress '=' to continue."
+            elif self.globals.pokemon_counter[self.globals.pokemon_index] == 2:
+                self.button1.text = "Use the arrow keys to choose an attack. \nPress ENTER to select an attack. \nPress '=' to continue."
             else:
-                self.button1.text = f"Press ENTER to select the attack{ '(this attack is trained)' if self.attacks[self.curr_attack_index].unlocked == True else ''}. \nPercent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\nAccuracy of run: {self.game_display[self.curr_attack_index].acc}" 
+                self.button1.text = f"Percent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\nAccuracy of run: {self.game_display[self.curr_attack_index].acc}\n{ '(This attack is trained.)' if self.attacks[self.curr_attack_index].unlocked == True else ''}" 
 
 # Number of attacks trained: {self.active_notemon.attacks_trained}\n
 
@@ -192,7 +188,7 @@ class TrainingWidget(Screen):
         if training_percent > 0.5 and curr_acc > 0 and not self.attacks[self.curr_attack_index].unlocked:
             self.active_notemon.attacks_trained += 1
             self.attacks[self.curr_attack_index].unlocked = True
-            self.button2 = Button(text='Click to go to Battle', font_size=font_sz, size = (button_sz[1], button_sz[1]), pos = (Window.width * .8, Window.height*.8))
+            self.button2 = Button(text='Click to go \nto Battle', font_size=0.02*Window.width, size = (Window.width*0.17, Window.height*0.07), pos = (Window.width-(Window.width*0.25) * .7, Window.height-(Window.height*0.1)*.7), background_color=(0, 0.5, 1, 1), font_name="Roboto-Bold.ttf")
             self.button2.bind(on_release= lambda x: self.switch_to('battle'))
             self.add_widget(self.button2)
             self.battle_unlocked = True
@@ -221,10 +217,12 @@ class TrainingWidget(Screen):
         self.button1.font_size = 0.02*win_size[0]
         self.button1.pos = ((win_size[0] - button_width) * 0.3, win_size[1] * 0.9)
 
+        button_width = win_size[0] * 0.17 
+        button_height = win_size[1] * 0.07
         if self.battle_unlocked == True:
             self.button2.size = (button_width, button_height)
             self.button2.font_size = 0.02*win_size[0]
-            self.button2.pos = ((win_size[0] - button_width) * 0.8, win_size[1] * 0.8)
+            self.button2.pos = (win_size[0] - (win_size[0]*0.25) * 0.7, win_size[1] - (win_size[1]*0.1) * 0.7)
 
     def on_update(self):
         self.audio.on_update() # used to be # self.audio_ctrl.on_update()
@@ -237,8 +235,8 @@ class TrainingWidget(Screen):
 
         self.training = reduce(lambda tot,aud_ctrl: tot or aud_ctrl.training, self.audio_ctrl, False)
 
-        if self.globals.pokemon_counter[self.globals.pokemon_index] > 3:
-            self.button1.text = f"Press ENTER to select the attack.{ ' (This attack is trained.)' if self.attacks[self.curr_attack_index].unlocked == True else ''} \nPercent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\nAccuracy of run: {self.game_display[self.curr_attack_index].acc}" 
+        if self.globals.pokemon_counter[self.globals.pokemon_index] > 2:
+            self.button1.text = f"Percent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\nAccuracy of run: {self.game_display[self.curr_attack_index].acc}\n{ '(This attack is trained.)' if self.attacks[self.curr_attack_index].unlocked == True else ''}" 
 
         # self.info.text = "Training Screen; '-' switches to main. ENTER to select attack.\n"
         # self.info.text += "To train an attack, unlock at least half the gems AND have accuracy > 0\n"

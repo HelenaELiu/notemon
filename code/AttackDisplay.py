@@ -32,9 +32,9 @@ class AttackDisplay(InstructionGroup):
         #opponents attacks are not shown, only ours are
         if training or self.attack.unlocked:
             #graphics
-            colors = [0.1, 0.5, 0.7, 0.85]
+            colors = [0.09, 0, 0.7, 0.85]
             self.color = Color(hsv=(colors[index], 1, 1))
-            self.color.a = 0.7
+            self.color.a = 0.9
             self.add(self.color)
 
             w = box_width * Window.width
@@ -91,16 +91,16 @@ class AttackDisplay(InstructionGroup):
 
             if self.index == 0:
                 self.box = Line(rectangle = (x1, y1, w, h), width = 3)
-                self.label = CLabelRect(cpos = (x1 + w // 2, y1 + h // 2), text = self.attack.name)
+                self.label = CLabelRect(cpos = (x1 + w // 2, y1 + h // 2), font_size=win_size[0]*0.013, text = self.attack.name)
             elif self.index == 1:
                 self.box = Line(rectangle = (x2, y1, w, h), width = 3)
-                self.label = CLabelRect(cpos = (x2 + w // 2, y1 + h // 2), text = self.attack.name)
+                self.label = CLabelRect(cpos = (x2 + w // 2, y1 + h // 2), font_size=win_size[0]*0.013, text = self.attack.name)
             elif self.index == 2:
                 self.box = Line(rectangle = (x1, y2, w, h), width = 3)
-                self.label = CLabelRect(cpos = (x1 + w // 2, y2 + h // 2), text = self.attack.name)
+                self.label = CLabelRect(cpos = (x1 + w // 2, y2 + h // 2), font_size=win_size[0]*0.013, text = self.attack.name)
             elif self.index == 3:
                 self.box = Line(rectangle = (x2, y2, w, h), width = 3)
-                self.label = CLabelRect(cpos = (x2 + w // 2, y2 + h // 2), text = self.attack.name)
+                self.label = CLabelRect(cpos = (x2 + w // 2, y2 + h // 2), font_size=win_size[0]*0.013, text = self.attack.name)
 
             if self.selected:
                 self.select()

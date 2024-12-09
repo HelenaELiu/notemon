@@ -55,7 +55,9 @@ class ButtonDisplay(InstructionGroup):
         size = space_betw_btns * win_size[0] * button_width
         self.button.csize = (size, size)
         self.button.cpos=(self.x, btn_h * win_size[1])
-        self.label.cpos = (self.x, btn_h * win_size[1])
+        self.remove(self.label)
+        self.label = CLabelRect(cpos = (self.x, btn_h * win_size[1]), font_size=win_size[0]*0.013, text = btns[self.lane])
+        self.add(self.label)
 
 class NowbarDisplay(InstructionGroup):
     def __init__(self, tick_to_xpos):
