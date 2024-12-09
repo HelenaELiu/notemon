@@ -131,10 +131,11 @@ class GameDisplay(InstructionGroup):
             g.on_resize(win_size)
         for button in self.buttons:
             button.on_resize(win_size)
-        self.listen.cpos = (Window.width//2, Window.height//2)
-        self.play.cpos = (Window.width//2, Window.height//2)
-
-
+        self.remove(self.listen)
+        self.remove(self.play)
+        self.listen = CLabelRect(font_size=win_size[0]*0.013, cpos=(Window.width//2, Window.height//2), text="Listen!")
+        self.play = CLabelRect(font_size=win_size[0]*0.013, cpos=(Window.width//2, Window.height//2), text="Play!")
+    
     # call every frame to handle animation needs
     def on_update(self, now_tick):
         vis = self.nowbar.on_update(now_tick)
