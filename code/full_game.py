@@ -371,15 +371,33 @@ class Win(Screen):
         self.add_widget(self.background)
         self.counter = 0
         self.button1 = Button()
+        self.notemon = Image()
 
     def on_enter(self):
         self.button1 = Button(text=f"YOU WON! \nYou have now acquired {self.globals.database[self.globals.opp_index].name}. \nPress '=' to return to selection screen to train {self.globals.database[self.globals.opp_index].name}.", font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.6), background_color=(0, 0.5, 1, 0), font_name="Roboto-Bold.ttf")
         self.button1.bind(on_release= lambda x: self.switch_to(f'{self.globals.pokemon_dict[self.globals.opp_index]}'))
         self.add_widget(self.button1)
+        
+        path = f'{self.globals.meloetta_dict[self.globals.opp_index]}.png'
+        self.notemon = Image(
+            source=path,      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        self.notemon.pos = (Window.width*0.05, Window.height*0.55)
+        self.add_widget(self.notemon)
         self.on_resize((Window.width, Window.height))
     
+    def on_key_down(self, keycode, modifiers):
+        if keycode[1] == '=':
+            self.switch_to(f'{self.globals.pokemon_dict[self.globals.opp_index]}')
+   
     def on_resize(self, win_size):
         self.background.size = win_size
+        self.notemon.pos = (win_size[0]*0.05, win_size[1]*0.55)
+        self.notemon.size = (win_size[0]*0.1, win_size[1]*0.17)
         button_width = win_size[0] * 0.4  # 40% of window width
         button_height = win_size[1] * 0.1  # 10% of window height
 
@@ -409,7 +427,6 @@ class Lose(Screen):
 
     def on_enter(self):
         self.button1 = Button(text=f"We fainted :( \nPress '=' to return to selection screen to train.", font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.6), background_color=(0, 0.5, 1, 0), font_name="Roboto-Bold.ttf")
-        self.button1.bind(on_release= lambda x: self.switch_to(f'{self.globals.database[self.pokemon_index]}'))
         self.add_widget(self.button1)
         
         path = f'{self.globals.meloetta_dict[self.globals.pokemon_index]}_fainted.png'
@@ -423,6 +440,10 @@ class Lose(Screen):
         self.notemon.pos = (Window.width*0.05, Window.height*0.55)
         self.add_widget(self.notemon)
         self.on_resize((Window.width, Window.height))
+
+    def on_key_down(self, keycode, modifiers):
+        if keycode[1] == '=':
+            self.switch_to(f'{self.globals.pokemon_dict[self.globals.pokemon_index]}')
     
     def on_resize(self, win_size):
         self.background.size = win_size
