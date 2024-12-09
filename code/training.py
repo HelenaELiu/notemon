@@ -139,7 +139,7 @@ class TrainingWidget(Screen):
             elif self.globals.pokemon_counter[self.globals.pokemon_index] == 3:
                 self.button1.text = "Use the arrow keys to choose an attack. \nPress '=' to continue."
             else:
-                self.button1.text = f"Press ENTER to select the attack. \nPercent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\nAccuracy of run: {self.game_display[self.curr_attack_index].acc}" 
+                self.button1.text = f"Press ENTER to select the attack{ '(this attack is trained)' if self.attacks[self.curr_attack_index].unlocked == True else ''}. \nPercent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\nAccuracy of run: {self.game_display[self.curr_attack_index].acc}" 
 
 # Number of attacks trained: {self.active_notemon.attacks_trained}\n
 
@@ -236,6 +236,9 @@ class TrainingWidget(Screen):
         self.scoring()
 
         self.training = reduce(lambda tot,aud_ctrl: tot or aud_ctrl.training, self.audio_ctrl, False)
+
+        if self.globals.pokemon_counter[self.globals.pokemon_index] > 3:
+            self.button1.text = f"Press ENTER to select the attack.{ ' (This attack is trained.)' if self.attacks[self.curr_attack_index].unlocked == True else ''} \nPercent gems unlocked: {self.game_display[self.curr_attack_index].get_training_percent() * 100:.0f}%\nAccuracy of run: {self.game_display[self.curr_attack_index].acc}" 
 
         # self.info.text = "Training Screen; '-' switches to main. ENTER to select attack.\n"
         # self.info.text += "To train an attack, unlock at least half the gems AND have accuracy > 0\n"
