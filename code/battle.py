@@ -218,6 +218,11 @@ class MainWidget(Screen):
                     self.can_hit = True
                 else:
                     self.rhythm_done = True
+        
+        if self.display.notemon_opponent.fainted:
+            self.switch_to("Win")
+        if self.display.notemon_us.fainted:
+            self.switch_to("Lose")
 
     def on_resize(self, win_size):
         self.background.size = win_size

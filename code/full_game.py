@@ -208,25 +208,8 @@ class Notemon_red(NotemonScreen):
         self.add_widget(self.notemon)
 
         self.index = 0
-        self.switch_fwd = 'Notemon_yellow'
-        self.switch_back = 'Notemon_purple'
-
-class Notemon_yellow(NotemonScreen):
-    def __init__(self, **kwargs):
-        super(Notemon_yellow, self).__init__(**kwargs)
-        self.notemon = Image(
-            source='meloetta_yellow.png',      # Replace with the path to your image
-            allow_stretch=True,       # Allow the image to stretch
-            keep_ratio=True,         # Do not maintain aspect ratio (optional)
-            size_hint=(None, None),   # Disable size hinting to allow manual resizing
-            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
-        )
-        self.notemon.pos = (Window.width*0.45, Window.height//2)
-        self.add_widget(self.notemon)
-
-        self.index = 1
         self.switch_fwd = 'Notemon_orange'
-        self.switch_back = 'Notemon_red'
+        self.switch_back = 'Notemon_purple'
 
 class Notemon_orange(NotemonScreen):
     def __init__(self, **kwargs):
@@ -241,9 +224,26 @@ class Notemon_orange(NotemonScreen):
         self.notemon.pos = (Window.width*0.45, Window.height//2)
         self.add_widget(self.notemon)
 
+        self.index = 1
+        self.switch_fwd = 'Notemon_yellow'
+        self.switch_back = 'Notemon_red'
+        
+class Notemon_yellow(NotemonScreen):
+    def __init__(self, **kwargs):
+        super(Notemon_yellow, self).__init__(**kwargs)
+        self.notemon = Image(
+            source='meloetta_yellow.png',      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        self.notemon.pos = (Window.width*0.45, Window.height//2)
+        self.add_widget(self.notemon)
+
         self.index = 2
         self.switch_fwd = 'Notemon_green'
-        self.switch_back = 'Notemon_yellow'
+        self.switch_back = 'Notemon_orange'
 
 class Notemon_green(NotemonScreen):
     def __init__(self, **kwargs):
@@ -260,7 +260,7 @@ class Notemon_green(NotemonScreen):
 
         self.index = 3
         self.switch_fwd = 'Notemon_blue'
-        self.switch_back = 'Notemon_orange'
+        self.switch_back = 'Notemon_yellow'
 
 class Notemon_blue(NotemonScreen):
     def __init__(self, **kwargs):

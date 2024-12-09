@@ -6,11 +6,11 @@ class NotemonDatabase(object):
     def __init__(self):
         #names
         self.attack_database = AttackDatabase()
-        self.names = ["melored", "meloyellow", "melorange", "melogreen", "meloblue", "melopurple"]
-        self.screen_names = ["Notemon_red", "Notemon_yellow", "Notemon_orange", "Notemon_green", "Notemon_blue", "Notemon_purple"]
+        self.names = ["melored", "melorange", "meloyellow", "melogreen", "meloblue", "melopurple"]
+        self.screen_names = ["Notemon_red", "Notemon_orange", "Notemon_yellow", "Notemon_green", "Notemon_blue", "Notemon_purple"]
 
         #image sources
-        colors = ["red", "yellow", "orange", "green", "blue", "purple"]
+        colors = ["red", "orange", "yellow", "green", "blue", "purple"]
         self.hs = [0/6, 1/6, 1/12, 2/6, 4/6, 5/6]
         self.img_srcs = []
 
@@ -19,30 +19,30 @@ class NotemonDatabase(object):
 
         #healths
         self.healths = {"melored": 100,
-                        "meloyellow": 120,
-                        "melorange": 140,
+                        "melorange": 120,
+                        "meloyellow": 140,
                         "melogreen": 160,
                         "meloblue": 180,
                         "melopurple": 200,}
 
         self.skills = {"melored": .3,
-                        "meloyellow": .3,
-                        "melorange": .4,
+                        "melorange": .3,
+                        "meloyellow": .4,
                         "melogreen": .3,
                         "meloblue": .3,
                         "melopurple": .4,}
 
         self.direction_enable = {"melored": False,
-                        "meloyellow": False,
                         "melorange": False,
+                        "meloyellow": False,
                         "melogreen": True,
                         "meloblue": True,
                         "melopurple": True,}
 
         #attacks
         self.attacks = {"melored": ["winter", "magic flute", "rolling in the deep", "the feels"],
-                        "meloyellow": ["fifth symphony", "fur elise", "hello", "shape of you"],
-                        "melorange": ["fur elise", "rolling in the deep", "dynamite", "uptown funk"],
+                        "melorange": ["fifth symphony", "fur elise", "hello", "shape of you"],
+                        "meloyellow": ["fur elise", "rolling in the deep", "dynamite", "uptown funk"],
                         "melogreen": ["magic flute", "hello", "just the way you are", "shape of you"],
                         "meloblue": ["hello", "espresso", "dynamite", "just the way you are"],
                         "melopurple": ["rolling in the deep", "uptown funk", "shape of you", "the feels"],}
