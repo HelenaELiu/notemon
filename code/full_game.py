@@ -73,10 +73,6 @@ class IntroScreen(Screen):
         self.button2 = Button(text='Welcome to Notemon', font_size=font_sz*4, size = (bigger_button_sz[0], bigger_button_sz[1]), pos = ((Window.width - bigger_button_sz[0])*.5, Window.height*0.6), background_color=(0, 0.5, 1, 1), font_name="Roboto-Bold.ttf")
         self.add_widget(self.button2)
 
-        self.button3 = Button(text='Welcome to Battle', font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.85), background_color=(0, 0.5, 1, 0), font_name="Roboto-Bold.ttf")
-        self.button3.bind(on_release= lambda x: self.switch_to('battletutorial'))
-        self.add_widget(self.button3)
-
 
     def on_key_down(self, keycode, modifiers):
         if keycode[1] == '=':
@@ -316,22 +312,29 @@ class BattleTutorial(Screen):
 
         self.add_widget(self.background)
         self.counter = 0
-        self.button1 = Button(text="Welcome to Battle \nPress '=' to continue", font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.85), background_color=(0, 0.5, 1, 0), font_name="Roboto-Bold.ttf")
+        self.button1 = Button(text="Welcome to Battle! \nPress '=' to continue", font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.85), background_color=(0, 0.5, 1, 0), font_name="Roboto-Bold.ttf")
         self.add_widget(self.button1)
 
-        # self.info.text = "Battle Screen\n"
-        # if self.direction_enable:
-        #     self.info.text += "Defend by: \n"
-        #     self.info.text += "Pressing up as the pitch goes up,\n"
-        #     self.info.text += "down as the pitch goes down,\n"
-        #     self.info.text += "and space otherwise!\n"
-        #     self.info.text += "And do it all in time with their attack!\n"
-        # else:
-        #     self.info.text += "Defend by pressing space in time with the attack!\n"
-        # self.info.text += "-: switch main\n"
+        self.notemon = Image()
+
+    def on_enter(self):
+        path = f'{self.globals.meloetta_dict[self.globals.pokemon_index]}.png'
+        self.notemon = Image(
+            source=path,      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        self.notemon.pos = (Window.width*0.45, Window.height//2)
+        self.add_widget(self.notemon)
+
+        self.on_resize((Window.width, Window.height))
 
     def on_resize(self, win_size):
         self.background.size = win_size
+        self.notemon.pos = (win_size[0]*0.01, win_size[1]*0.8)
+        self.notemon.size = (win_size[0]*0.1, win_size[1]*0.17)
         button_width = win_size[0] * 0.4  # 40% of window width
         button_height = win_size[1] * 0.1  # 10% of window height
 
@@ -350,6 +353,89 @@ class BattleTutorial(Screen):
                 self.button1.text = "Defend by pressing up as the pitch goes up, \ndown as the pitch goes down, and space otherwise.\nReady? Press '=' to start"
             else:
                 self.switch_to("battle")
+
+class Win(Screen):
+    def __init__(self, **kwargs):
+        super(Win, self).__init__(**kwargs)
+
+        # Add the background image
+        self.background = Image(
+            source='battle1.png',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
+        self.counter = 0
+        self.button1 = Button()
+
+    def on_enter(self):
+        self.button1 = Button(text=f"YOU WON! \nYou have now acquired {self.globals.database[self.globals.opp_index].name}. \nPress '=' to return to selection screen to train {self.globals.database[self.globals.opp_index].name}.", font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.6), background_color=(0, 0.5, 1, 0), font_name="Roboto-Bold.ttf")
+        self.button1.bind(on_release= lambda x: self.switch_to(f'{self.globals.pokemon_dict[self.globals.opp_index]}'))
+        self.add_widget(self.button1)
+        self.on_resize((Window.width, Window.height))
+    
+    def on_resize(self, win_size):
+        self.background.size = win_size
+        button_width = win_size[0] * 0.4  # 40% of window width
+        button_height = win_size[1] * 0.1  # 10% of window height
+
+        # Set button sizes and positions
+        self.button1.size = (button_width, button_height)
+        self.button1.font_size = 0.03*win_size[0]
+        self.button1.pos = ((win_size[0] - button_width) * 0.5, win_size[1] * 0.6)
+
+class Lose(Screen):
+    def __init__(self, **kwargs):
+        super(Lose, self).__init__(**kwargs)
+
+        # Add the background image
+        self.background = Image(
+            source='battle1.png',  # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch to fill the screen
+            keep_ratio=False          # Fill the entire screen without maintaining aspect ratio
+        )
+        self.background.size = Window.size
+        self.background.size_hint = (None, None)  # Disable size hinting
+        self.background.pos = (0, 0)  # Position the image at the bottom-left corner
+
+        self.add_widget(self.background)
+        self.counter = 0
+        self.button1 = Button()
+        self.notemon = Image()
+
+    def on_enter(self):
+        self.button1 = Button(text=f"We fainted :( \nPress '=' to return to selection screen to train.", font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.6), background_color=(0, 0.5, 1, 0), font_name="Roboto-Bold.ttf")
+        self.button1.bind(on_release= lambda x: self.switch_to(f'{self.globals.database[self.pokemon_index]}'))
+        self.add_widget(self.button1)
+        
+        path = f'{self.globals.meloetta_dict[self.globals.pokemon_index]}_fainted.png'
+        self.notemon = Image(
+            source=path,      # Replace with the path to your image
+            allow_stretch=True,       # Allow the image to stretch
+            keep_ratio=True,         # Do not maintain aspect ratio (optional)
+            size_hint=(None, None),   # Disable size hinting to allow manual resizing
+            size=(150, 200)           # Set a specific size for the sprite image (adjust as needed)
+        )
+        self.notemon.pos = (Window.width*0.05, Window.height*0.55)
+        self.add_widget(self.notemon)
+        self.on_resize((Window.width, Window.height))
+    
+    def on_resize(self, win_size):
+        self.background.size = win_size
+        self.notemon.pos = (win_size[0]*0.05, win_size[1]*0.55)
+        self.notemon.size = (win_size[0]*0.1, win_size[1]*0.17)
+        
+        button_width = win_size[0] * 0.4  # 40% of window width
+        button_height = win_size[1] * 0.1  # 10% of window height
+
+        # Set button sizes and positions
+        self.button1.size = (button_width, button_height)
+        self.button1.font_size = 0.03*win_size[0]
+        self.button1.pos = ((win_size[0] - button_width) * 0.5, win_size[1] * 0.6)
 
 class MainScreen(Screen):
     def __init__(self, **kwargs):
@@ -414,9 +500,11 @@ class Globals():
         self.total_score = 0
         self.pokemon_index = 0
         self.database = NotemonDatabase().make_notemon_array()
-        self.pokemon_dict = {0: 'main', 1: 'Notemon_orange', 2: 'Notemon_yellow', 3: 'Notemon_green', 4: 'Notemon_blue', 5: 'Notemon_purple'}
+        self.pokemon_dict = {0: 'Notemon_red', 1: 'Notemon_orange', 2: 'Notemon_yellow', 3: 'Notemon_green', 4: 'Notemon_blue', 5: 'Notemon_purple'}
         self.pokemon_counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        self.meloetta_dict = {0: 'meloetta_red', 1: 'meloetta_orange', 2: 'meloetta_yellow', 3: 'meloetta_green', 4: 'meloetta_blue', 5: 'meloetta_purple'}
         self.notemon_screens = None
+        self.opp_index = 0
         # could also create self.audio = Audio(2) here if needed
         # self.audio = Audio(2)
         # (there should only ever be one Audio instance)
@@ -442,5 +530,7 @@ sm.add_screen(Notemon_purple(name='Notemon_purple'))
 sm.add_screen(TrainingWidget('training', audio, synth, sched))
 sm.add_screen(MainWidget('battle', audio, synth, sched))
 sm.add_screen(BattleTutorial(name='battletutorial'))
+sm.add_screen(Win(name='Win'))
+sm.add_screen(Lose(name='Lose'))
 sm.globals.add_notemon_screens(sm.screens)
 run(sm)

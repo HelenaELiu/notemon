@@ -76,11 +76,15 @@ class NotemonDisplay(InstructionGroup):
         else:
             self.x = 2 * x_margin * Window.width
             self.y = (1 - 6 * y_margin) * Window.height
+        
+        img_size = (0.0875*Window.width, 0.19167*Window.height)
+        
         self.x -= img_size[0] / 2
         self.y -= img_size[1] / 2
 
         self.notemon.pos = (self.x, self.y)
-
+        self.notemon.size = img_size
+        
         self.label_x = self.x + img_size[0] / 2
         self.label_y = self.y + img_size[1] * 1.2
 

@@ -80,6 +80,7 @@ class MainWidget(Screen):
         self.player_attacks = self.globals.database[self.globals.pokemon_index].attacks
 
         self.opp_index = random.randrange(6)
+        self.globals.opp_index = self.opp_index
         self.opp = self.globals.database[self.opp_index]
 
         self.direction_enable = self.opp.direction_enable
