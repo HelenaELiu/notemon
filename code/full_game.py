@@ -30,6 +30,8 @@ from imslib.synth import Synth
 
 from AttackDatabase import AttackDatabase
 
+import random
+
 # metrics allows kivy to create screen-density-indeptrainingent sizes.
 # Here, 20 dp will always be the same physical size on screen regardless of resolution or OS.
 # Another option is to use metrics.pt or metrics.sp. See https://kivy.org/doc/stable/api-kivy.metrics.html
@@ -318,6 +320,7 @@ class BattleTutorial(Screen):
         self.notemon = Image()
 
     def on_enter(self):
+        self.globals.opp_index = random.randrange(6)
         path = f'{self.globals.meloetta_dict[self.globals.pokemon_index]}.png'
         self.notemon = Image(
             source=path,      # Replace with the path to your image
@@ -347,10 +350,10 @@ class BattleTutorial(Screen):
         if keycode[1] == '=':
             print(self.globals.pokemon_index)
             self.counter +=1
-            if self.counter == 1 and self.globals.pokemon_index < 3: # 0, 1, 2
+            if self.counter == 1 and self.globals.opp_index < 3: # 0, 1, 2
                 self.button1.text = "Defend by pressing space in time with the attack.\nReady? Press '=' to start"
-            elif self.counter == 1 and self.globals.pokemon_index > 2: # 3, 4, 5
-                self.button1.text = "Defend by pressing up as the pitch goes up, \ndown as the pitch goes down, and space otherwise.\nReady? Press '=' to start"
+            elif self.counter == 1 and self.globals.opp_index > 2: # 3, 4, 5
+                self.button1.text = "Defend by pressing up as the pitch goes up, and \ndown as the pitch goes down. \nYou can use either for pitches that don't go up or down!\nReady? Press '=' to start"
             else:
                 self.switch_to("battle")
 

@@ -34,7 +34,6 @@ y_margin = 1/20 #distance from bottom of boxes to edge of screen
 box_width = 7/20 #width of boxes
 box_height = 1/6 #height of boxes
 radius_margin = 1/16 #radius of notemon circles
-defense_threshold = .9
 
 TIME_BETWEEN_ATTACKS = 960
 
@@ -79,12 +78,11 @@ class MainWidget(Screen):
         self.active_notemon = self.globals.database[self.globals.pokemon_index]
         self.player_attacks = self.globals.database[self.globals.pokemon_index].attacks
 
-        self.opp_index = random.randrange(6)
-        self.globals.opp_index = self.opp_index
+        self.opp_index = self.globals.opp_index
         self.opp = self.globals.database[self.opp_index]
 
         self.direction_enable = self.opp.direction_enable
-        self.defendable_keys = set(['spacebar']) if not self.direction_enable else set(['up', 'down', 'spacebar'])
+        self.defendable_keys = set(['spacebar']) if not self.direction_enable else set(['up', 'down'])
 
         self.op_attacks = self.globals.database[self.opp_index].attacks
         self.op_audio_ctrl = [OppAudioController(self.synth, self.sched, attack, index, self.player_defense_screen) for (index, attack) in enumerate(self.op_attacks)]
@@ -135,7 +133,8 @@ class MainWidget(Screen):
 
             hit_condition = (target_time - self.tick <= accuracy_window) and self.can_hit
             if self.direction_enable:
-                hit_condition = hit_condition and (keycode[1] == self.op_attacks[self.opp_box_played].gem_directions[self.gem_idx])
+                target_dir = self.op_attacks[self.opp_box_played].gem_directions[self.gem_idx]
+                hit_condition = hit_condition and (target_dir == 'any' or keycode[1] == target_dir)
 
             if hit_condition:
                 self.rhythm_display[self.opp_box_played].gem_hit(self.gem_idx)
@@ -150,8 +149,7 @@ class MainWidget(Screen):
                 self.can_hit = False
 
     def on_key_up(self, keycode):
-
-        if keycode[1] == "spacebar" and any([i.attacking for i in self.op_audio_ctrl]):
+        if keycode[1] in self.defendable_keys and any([i.attacking for i in self.op_audio_ctrl]):
             self.rhythm_display[self.opp_box_played].on_button_up()
 
     def attack_player(self, tick):
@@ -178,7 +176,7 @@ class MainWidget(Screen):
 
     def player_attack_screen(self, tick, index):
         accuracy = self.rhythm_display[index].reset()
-        if accuracy >= defense_threshold: # EDIT ACCURACY THRESHOLD LOGIC AS YOUD LIKE
+        if accuracy >= 1.1 * (1-self.globals.database[self.globals.pokemon_index].skill):
             new_text = "Defended successfully!"
         else:
             new_text = self.display.take_damage(self.op_attacks[index].damage)
