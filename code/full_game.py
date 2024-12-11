@@ -382,6 +382,7 @@ class Win(Screen):
         self.notemon = Image()
 
     def on_enter(self):
+        self.remove_widget(self.button1)
         self.button1 = Button(text=f"YOU WON! \nYou have now acquired {self.globals.database[self.globals.opp_index].name}. \nPress '=' to return to selection screen to train {self.globals.database[self.globals.opp_index].name}.", font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.6), background_color=(0, 0.5, 1, 0), font_name="Roboto-Bold.ttf")
         self.button1.bind(on_release= lambda x: self.switch_to(f'{self.globals.pokemon_dict[self.globals.opp_index]}'))
         self.add_widget(self.button1)
@@ -434,6 +435,7 @@ class Lose(Screen):
         self.notemon = Image()
 
     def on_enter(self):
+        self.remove_widget(self.button1)
         self.button1 = Button(text=f"We fainted :( \nPress '=' to return to selection screen to train.", font_size=font_sz, size = (button_sz[0], button_sz[1]), pos = ((Window.width - button_sz[0])*.5, Window.height*0.6), background_color=(0, 0.5, 1, 0), font_name="Roboto-Bold.ttf")
         self.add_widget(self.button1)
         
