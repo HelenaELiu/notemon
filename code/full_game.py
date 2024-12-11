@@ -167,6 +167,10 @@ class NotemonScreen(Screen):
             print('MainScreen prev')
             self.switch_to(self.switch_back)
 
+        if keycode[1] == 'enter':
+            print('MainScreen prev')
+            self.switch_to_training()
+
     def on_resize(self, win_size):
         self.background.size = win_size
         self.notemon.pos = (win_size[0]*0.45, win_size[1]//2)
