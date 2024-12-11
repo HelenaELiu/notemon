@@ -63,7 +63,7 @@ class NotemonDisplay(InstructionGroup):
         self.add(self.label)
     
     def take_damage(self, damage):
-        if self.health - damage < 0:
+        if self.health - damage <= 0:
             self.health = 0
             self.fainted = True
         else:
